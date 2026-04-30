@@ -75,7 +75,7 @@ Role access:
 | `GET /api/inventory/reservations` | `OPS_MANAGER`, `WAREHOUSE`, `SALES`, `AUDITOR` |
 | `GET /api/inventory/reservations/{reservationId}` | `OPS_MANAGER`, `WAREHOUSE`, `SALES`, `AUDITOR` |
 
-Receiving a lot creates an available inventory lot and records an initial `RECEIVE` stock movement. Submitting an order creates an active reservation, allocates the earliest valid expiry lots first, updates available and reserved quantities, and records `RESERVE` stock movements. Quantity constraints are enforced in both API validation and PostgreSQL checks.
+Receiving a lot creates an available inventory lot and records an initial `RECEIVE` stock movement. Submitting an order creates an active reservation, allocates the earliest valid expiry lots first, updates available and reserved quantities, and records `RESERVE` stock movements. Completing a dispatch job consumes the active reservation, moves reserved lot quantity into dispatched quantity, and records `DISPATCH` stock movements. Quantity constraints are enforced in both API validation and PostgreSQL checks.
 
 ## Pricing Endpoints
 
@@ -131,6 +131,8 @@ Submitting an order also writes audit events for draft creation, stock reservati
 POST /api/fulfillment/pick-waves
 GET  /api/fulfillment/pick-waves
 GET  /api/fulfillment/pick-waves/{pickWaveId}
+POST /api/fulfillment/dispatch-jobs/{dispatchJobId}/complete
+POST /api/fulfillment/dispatch-jobs/{dispatchJobId}/fail
 GET  /api/fulfillment/sla-risk
 ```
 
@@ -141,9 +143,13 @@ Role access:
 | `POST /api/fulfillment/pick-waves` | `OPS_MANAGER`, `DISPATCH` |
 | `GET /api/fulfillment/pick-waves` | `OPS_MANAGER`, `DISPATCH`, `WAREHOUSE`, `AUDITOR` |
 | `GET /api/fulfillment/pick-waves/{pickWaveId}` | `OPS_MANAGER`, `DISPATCH`, `WAREHOUSE`, `AUDITOR` |
+| `POST /api/fulfillment/dispatch-jobs/{dispatchJobId}/complete` | `OPS_MANAGER`, `DISPATCH` |
+| `POST /api/fulfillment/dispatch-jobs/{dispatchJobId}/fail` | `OPS_MANAGER`, `DISPATCH` |
 | `GET /api/fulfillment/sla-risk` | `OPS_MANAGER`, `DISPATCH`, `WAREHOUSE`, `AUDITOR` |
 
 Pick wave creation selects accepted orders for the requested delivery date and delivery zone that do not already have dispatch jobs. The response includes planned dispatch jobs with outlet delivery windows and SLA-risk flags. SLA risk is raised when a same-day job can no longer satisfy its delivery window after applying the route buffer.
+
+Completing a dispatch job changes the job to `COMPLETED`, consumes the order reservation, moves the order to `DELIVERED`, and writes inventory, ordering, and fulfillment audit events in the same transaction. Failing a dispatch job changes the job to `FAILED`, records a failure reason, moves the order to `DELIVERY_FAILED`, and keeps the reservation active for later operational handling.
 
 ## Audit Endpoints
 

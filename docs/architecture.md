@@ -22,6 +22,6 @@ flowchart LR
 - `inventory`: lots, stock movements, reservations, and expiry risk
 - `pricing`: contract pricing, tiers, campaigns, and surcharges
 - `ordering`: order intake, idempotency, and state transitions
-- `fulfillment`: pick waves, dispatch jobs, and SLA risk
+- `fulfillment`: pick waves, dispatch jobs, SLA risk, and delivery outcomes
 - `audit`: append-only operational audit and hash-chain checks
 - `reporting`: dashboard read models

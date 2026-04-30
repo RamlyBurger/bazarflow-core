@@ -54,9 +54,9 @@ This is not a generic ecommerce clone. The unique angle is distributor operation
 
 ## Current Implementation State
 
-The initial repository scaffold is in place. The backend now has module-boundary verification, PostgreSQL migrations, Spring Security method guards, problem-details error handling, request correlation IDs, partner APIs, catalog product/SKU APIs, inventory lot receiving with stock movement recording, pricing quote APIs, priced order draft/submission/acceptance APIs, expiry-aware stock reservation across inventory lots, fulfillment pick wave planning with dispatch jobs and SLA-risk lookup, and audit event lookup for order, inventory, and fulfillment changes. These backend slices are covered by PostgreSQL-backed Testcontainers integration tests.
+The initial repository scaffold is in place. The backend now has module-boundary verification, PostgreSQL migrations, Spring Security method guards, problem-details error handling, request correlation IDs, partner APIs, catalog product/SKU APIs, inventory lot receiving with stock movement recording, pricing quote APIs, priced order draft/submission/acceptance APIs, expiry-aware stock reservation across inventory lots, fulfillment pick wave planning, dispatch completion/failure workflow, reservation consumption on completed dispatch, and audit event lookup for order, inventory, and fulfillment changes. These backend slices are covered by PostgreSQL-backed Testcontainers integration tests.
 
-The next implementation slice should add reservation consumption during dispatch completion, delivery completion/failure transitions, and the related audit events.
+The next implementation slice should add reporting read models for operational dashboard data, starting with dispatch backlog, active reservations, low-stock, and SLA-risk summaries.
 
 ## Engineering Scope
 
@@ -1131,7 +1131,7 @@ task demo-seed
 
 ## Maven Dependency Plan
 
-Use Maven wrapper for accessibility and employer familiarity.
+Use Maven wrapper for consistent local and CI execution.
 
 Version alignment:
 

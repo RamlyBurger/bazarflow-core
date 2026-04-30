@@ -16,6 +16,19 @@ X-Correlation-Id: local-list-pick-waves
 GET http://localhost:8080/api/fulfillment/pick-waves/{{pickWaveId}}
 X-Correlation-Id: local-get-pick-wave
 
+### Complete dispatch job
+POST http://localhost:8080/api/fulfillment/dispatch-jobs/{{dispatchJobId}}/complete
+X-Correlation-Id: local-complete-dispatch
+
+### Fail dispatch job
+POST http://localhost:8080/api/fulfillment/dispatch-jobs/{{dispatchJobId}}/fail
+Content-Type: application/json
+X-Correlation-Id: local-fail-dispatch
+
+{
+  "reason": "Outlet closed during delivery window"
+}
+
 ### List SLA-risk dispatch jobs
 GET http://localhost:8080/api/fulfillment/sla-risk
 X-Correlation-Id: local-fulfillment-sla-risk
