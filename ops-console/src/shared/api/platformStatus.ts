@@ -13,17 +13,17 @@ export type PlatformStatus = {
 
 const fallbackStatus: PlatformStatus = {
   service: 'bazarflow-core',
-  phase: 'phase-0-bootstrap',
+  phase: 'active-development',
   checkedAt: new Date().toISOString(),
   modules: [
-    { name: 'partner', responsibility: 'Retailers, outlets, zones, and credit status', status: 'planned' },
-    { name: 'catalog', responsibility: 'Products, SKUs, categories, and storage classes', status: 'planned' },
-    { name: 'inventory', responsibility: 'Lots, stock movements, reservations, and expiry risk', status: 'planned' },
-    { name: 'pricing', responsibility: 'Contract pricing, tiers, campaigns, and surcharges', status: 'planned' },
-    { name: 'ordering', responsibility: 'Order intake, idempotency, and state transitions', status: 'planned' },
-    { name: 'fulfillment', responsibility: 'Pick waves, dispatch jobs, and SLA risk', status: 'planned' },
-    { name: 'audit', responsibility: 'Append-only operational audit and hash-chain checks', status: 'planned' },
-    { name: 'reporting', responsibility: 'Operations dashboard read models', status: 'bootstrap' },
+    { name: 'partner', responsibility: 'Retailers, outlets, zones, and credit status', status: 'implemented' },
+    { name: 'catalog', responsibility: 'Products, SKUs, categories, and storage classes', status: 'implemented' },
+    { name: 'inventory', responsibility: 'Lots, stock movements, reservations, and expiry risk', status: 'implemented' },
+    { name: 'pricing', responsibility: 'Contract pricing, tiers, campaigns, and surcharges', status: 'implemented' },
+    { name: 'ordering', responsibility: 'Order intake, idempotency, and state transitions', status: 'implemented' },
+    { name: 'fulfillment', responsibility: 'Pick waves, dispatch jobs, delivery outcomes, and SLA risk', status: 'implemented' },
+    { name: 'audit', responsibility: 'Append-only operational audit', status: 'implemented' },
+    { name: 'reporting', responsibility: 'Operations dashboard read models', status: 'in-progress' },
   ],
 }
 
