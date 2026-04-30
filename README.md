@@ -4,7 +4,7 @@ BazarFlow Core is an internal operations platform for chilled and frozen food di
 
 The system is built as a Spring Boot modular monolith with clear module boundaries and a path to service extraction later. It covers OAuth2 security, idempotent order submission, expiry-aware inventory reservation, event-driven workflows, PostgreSQL persistence, and a React operations dashboard.
 
-The backend focuses on the business-critical paths: order intake, inventory reservation, batch expiry, pricing, delivery planning, auditability, and operations reporting. The frontend is designed for staff who need to scan risk and act quickly.
+The backend focuses on the business-critical paths: order intake, inventory reservation, batch expiry, pricing, delivery planning, auditability, and operations reporting. The frontend is designed for staff who need to scan risk and act quickly.qW
 
 ## Current Status
 
