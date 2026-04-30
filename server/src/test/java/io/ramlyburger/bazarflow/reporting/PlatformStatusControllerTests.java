@@ -23,7 +23,8 @@ class PlatformStatusControllerTests {
 		mockMvc.perform(get("/api/platform/status"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.service").value("bazarflow-core"))
-				.andExpect(jsonPath("$.phase").value("phase-0-bootstrap"))
-				.andExpect(jsonPath("$.modules[0].name").value("partner"));
+				.andExpect(jsonPath("$.phase").value("active-development"))
+				.andExpect(jsonPath("$.modules[0].name").value("partner"))
+				.andExpect(jsonPath("$.modules[0].status").value("implemented"));
 	}
 }
