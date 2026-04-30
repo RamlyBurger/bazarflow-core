@@ -120,6 +120,13 @@ class CustomerOrder {
 		submittedAt = Instant.now();
 	}
 
+	void accept() {
+		if (status != OrderStatus.SUBMITTED) {
+			throw new IllegalStateException("Only submitted orders can be accepted");
+		}
+		status = OrderStatus.ACCEPTED;
+	}
+
 	@PrePersist
 	void markCreated() {
 		Instant now = Instant.now();

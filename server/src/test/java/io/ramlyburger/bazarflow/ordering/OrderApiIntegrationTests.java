@@ -171,6 +171,44 @@ class OrderApiIntegrationTests {
 
 	@Test
 	@WithMockUser(roles = "OPS_MANAGER")
+	void acceptsSubmittedOrder() throws Exception {
+		UUID retailerId = createRetailer("Accepted Order Retailer", "ORDER-ACCEPT-001");
+		UUID outletId = createOutlet(retailerId, "Accepted Outlet", "north");
+		UUID skuId = createSku("ORDER-ACCEPT-SKU-001");
+		UUID priceBookId = createPriceBook("PB-ORDER-ACCEPT");
+		createRule(priceBookId, "ORDER-ACCEPT-PRICE", skuId, "7.25");
+		receiveLot(skuId, "ORDER-ACCEPT-LOT", "3.000", LocalDate.now(ZoneOffset.UTC).plusDays(20));
+		UUID orderId = createDraftOrder(retailerId, outletId, skuId, "1.000")
+				.andExpect(status().isCreated())
+				.andReturnOrderId();
+
+		mockMvc.perform(post("/api/orders/{orderId}/submit", orderId)
+						.header("Idempotency-Key", "accepted-submit-001"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("SUBMITTED"));
+
+		mockMvc.perform(post("/api/orders/{orderId}/accept", orderId)
+						.header("X-Correlation-Id", "test-correlation-accept-order"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+		mockMvc.perform(get("/api/orders/{orderId}/timeline", orderId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(3)))
+				.andExpect(jsonPath("$[2].fromStatus").value("SUBMITTED"))
+				.andExpect(jsonPath("$[2].toStatus").value("ACCEPTED"));
+
+		mockMvc.perform(get("/api/audit/events")
+						.param("aggregateType", "ORDER")
+						.param("aggregateId", orderId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(4)))
+				.andExpect(jsonPath("$[3].eventType").value("ORDER_ACCEPTED"))
+				.andExpect(jsonPath("$[3].correlationId").value("test-correlation-accept-order"));
+	}
+
+	@Test
+	@WithMockUser(roles = "OPS_MANAGER")
 	void rejectsDraftWhenNoPriceRuleMatches() throws Exception {
 		UUID retailerId = createRetailer("No Price Retailer", "ORDER-NO-PRICE-001");
 		UUID outletId = createOutlet(retailerId, "No Price Outlet", "north");

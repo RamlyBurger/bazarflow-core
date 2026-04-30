@@ -54,6 +54,12 @@ class OrderController {
 		return orderService.submit(orderId, idempotencyKey);
 	}
 
+	@PostMapping("/{orderId}/accept")
+	@PreAuthorize("hasRole('OPS_MANAGER')")
+	OrderResponse accept(@PathVariable UUID orderId) {
+		return orderService.accept(orderId);
+	}
+
 	@GetMapping("/{orderId}/timeline")
 	@PreAuthorize("hasAnyRole('OPS_MANAGER', 'SALES', 'WAREHOUSE', 'AUDITOR')")
 	List<OrderTimelineEntryResponse> getTimeline(@PathVariable UUID orderId) {

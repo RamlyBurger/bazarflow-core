@@ -131,6 +131,25 @@ class OrderService {
 				.orElseGet(() -> submitFirstAttempt(orderId, normalizedKey));
 	}
 
+	@Transactional
+	OrderResponse accept(UUID orderId) {
+		CustomerOrder order = findOrder(orderId);
+		if (order.status() != OrderStatus.SUBMITTED) {
+			throw new ConflictException("ORDER_NOT_ACCEPTABLE", "Only submitted orders can be accepted");
+		}
+
+		order.accept();
+		statusHistoryRepository.save(OrderStatusHistory.transition(
+				order.id(),
+				OrderStatus.SUBMITTED,
+				OrderStatus.ACCEPTED,
+				"Order accepted",
+				"system"
+		));
+		publishAccepted(order);
+		return toResponse(order);
+	}
+
 	@Transactional(readOnly = true)
 	List<OrderTimelineEntryResponse> getTimeline(UUID orderId) {
 		if (!orderRepository.existsById(orderId)) {
@@ -370,6 +389,20 @@ class OrderService {
 						"orderNumber", order.orderNumber(),
 						"status", order.status().name(),
 						"submittedAt", order.submittedAt().toString()
+				)
+		));
+	}
+
+	private void publishAccepted(CustomerOrder order) {
+		eventPublisher.publishEvent(AuditTrailEvent.record(
+				"ordering",
+				"ORDER",
+				order.id(),
+				"ORDER_ACCEPTED",
+				"Order accepted",
+				Map.of(
+						"orderNumber", order.orderNumber(),
+						"status", order.status().name()
 				)
 		));
 	}
