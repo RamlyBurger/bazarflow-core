@@ -61,4 +61,13 @@ class StockMovement {
 				"Reserved for order " + orderId
 		);
 	}
+
+	static StockMovement dispatch(InventoryLot lot, BigDecimal quantity, UUID orderId) {
+		return new StockMovement(
+				lot,
+				StockMovementType.DISPATCH,
+				quantity.negate(),
+				"Dispatched for order " + orderId
+		);
+	}
 }

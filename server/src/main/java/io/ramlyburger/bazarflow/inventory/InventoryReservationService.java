@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -75,6 +77,44 @@ public class InventoryReservationService {
 		return inventoryReservationRepository.findWithLinesById(reservationId)
 				.map(InventoryReservationService::toResponse)
 				.orElseThrow(() -> new NotFoundException("RESERVATION_NOT_FOUND", "Inventory reservation was not found"));
+	}
+
+	@Transactional
+	public InventoryReservationResponse consumeForOrder(UUID orderId) {
+		InventoryReservation reservation = inventoryReservationRepository.findByOrderIdForUpdate(orderId)
+				.orElseThrow(() -> new NotFoundException("RESERVATION_NOT_FOUND", "Inventory reservation was not found"));
+
+		if (reservation.status() != ReservationStatus.ACTIVE) {
+			throw new ConflictException(
+					"RESERVATION_NOT_CONSUMABLE",
+					"Only active inventory reservations can be consumed"
+			);
+		}
+
+		List<ReservationLine> lines = reservation.lines();
+		if (lines.isEmpty()) {
+			throw new ConflictException("RESERVATION_EMPTY", "Inventory reservation has no lines to consume");
+		}
+
+		Set<UUID> lotIds = lines.stream()
+				.map(ReservationLine::lotId)
+				.collect(Collectors.toSet());
+		Map<UUID, InventoryLot> lotsById = inventoryLotRepository.findAllByIdForUpdate(lotIds)
+				.stream()
+				.collect(Collectors.toMap(InventoryLot::id, Function.identity()));
+
+		for (ReservationLine line : lines) {
+			InventoryLot lot = lotsById.get(line.lotId());
+			if (lot == null) {
+				throw new NotFoundException("INVENTORY_LOT_NOT_FOUND", "Reserved inventory lot was not found");
+			}
+			lot.consumeReserved(line.quantity());
+			stockMovementRepository.save(StockMovement.dispatch(lot, line.quantity(), orderId));
+		}
+
+		reservation.consume();
+		publishInventoryConsumed(reservation);
+		return toResponse(reservation);
 	}
 
 	private void reserveItem(
@@ -176,6 +216,26 @@ public class InventoryReservationService {
 						"lineCount", Integer.toString(reservation.lines().size()),
 						"totalQuantity", totalQuantity.toPlainString(),
 						"expiresAt", reservation.expiresAt().toString()
+				)
+		));
+	}
+
+	private void publishInventoryConsumed(InventoryReservation reservation) {
+		BigDecimal totalQuantity = reservation.lines()
+				.stream()
+				.map(ReservationLine::quantity)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		eventPublisher.publishEvent(AuditTrailEvent.record(
+				"inventory",
+				"ORDER",
+				reservation.orderId(),
+				"INVENTORY_CONSUMED",
+				"Reserved inventory consumed for dispatch",
+				Map.of(
+						"reservationId", reservation.id().toString(),
+						"lineCount", Integer.toString(reservation.lines().size()),
+						"totalQuantity", totalQuantity.toPlainString()
 				)
 		));
 	}

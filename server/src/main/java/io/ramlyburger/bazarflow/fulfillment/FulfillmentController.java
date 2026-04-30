@@ -49,4 +49,19 @@ class FulfillmentController {
 	List<DispatchJobResponse> listSlaRiskJobs() {
 		return fulfillmentService.listSlaRiskJobs();
 	}
+
+	@PostMapping("/dispatch-jobs/{dispatchJobId}/complete")
+	@PreAuthorize("hasAnyRole('OPS_MANAGER', 'DISPATCH')")
+	DispatchJobResponse completeDispatchJob(@PathVariable UUID dispatchJobId) {
+		return fulfillmentService.completeDispatchJob(dispatchJobId);
+	}
+
+	@PostMapping("/dispatch-jobs/{dispatchJobId}/fail")
+	@PreAuthorize("hasAnyRole('OPS_MANAGER', 'DISPATCH')")
+	DispatchJobResponse failDispatchJob(
+			@PathVariable UUID dispatchJobId,
+			@Valid @RequestBody FailDispatchJobRequest request
+	) {
+		return fulfillmentService.failDispatchJob(dispatchJobId, request);
+	}
 }

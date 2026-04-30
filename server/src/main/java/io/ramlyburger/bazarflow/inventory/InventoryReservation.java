@@ -76,6 +76,13 @@ class InventoryReservation {
 		lines.add(ReservationLine.create(this, lot, quantity));
 	}
 
+	void consume() {
+		if (status != ReservationStatus.ACTIVE) {
+			throw new IllegalStateException("Only active reservations can be consumed");
+		}
+		status = ReservationStatus.CONSUMED;
+	}
+
 	@PrePersist
 	void markCreated() {
 		Instant now = Instant.now();

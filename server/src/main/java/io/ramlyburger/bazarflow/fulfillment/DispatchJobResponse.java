@@ -18,6 +18,9 @@ record DispatchJobResponse(
 		DispatchJobStatus status,
 		boolean slaAtRisk,
 		String slaRiskReason,
-		Instant plannedAt
+		Instant plannedAt,
+		Instant completedAt,
+		Instant failedAt,
+		String failureReason
 ) {
 }

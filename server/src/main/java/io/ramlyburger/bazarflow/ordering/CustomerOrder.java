@@ -127,6 +127,20 @@ class CustomerOrder {
 		status = OrderStatus.ACCEPTED;
 	}
 
+	void markDelivered() {
+		if (status != OrderStatus.ACCEPTED) {
+			throw new IllegalStateException("Only accepted orders can be marked delivered");
+		}
+		status = OrderStatus.DELIVERED;
+	}
+
+	void markDeliveryFailed() {
+		if (status != OrderStatus.ACCEPTED) {
+			throw new IllegalStateException("Only accepted orders can be marked delivery failed");
+		}
+		status = OrderStatus.DELIVERY_FAILED;
+	}
+
 	@PrePersist
 	void markCreated() {
 		Instant now = Instant.now();

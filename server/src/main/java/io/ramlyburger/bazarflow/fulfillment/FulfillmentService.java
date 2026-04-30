@@ -3,6 +3,8 @@ package io.ramlyburger.bazarflow.fulfillment;
 import io.ramlyburger.bazarflow.common.AuditTrailEvent;
 import io.ramlyburger.bazarflow.common.ConflictException;
 import io.ramlyburger.bazarflow.common.NotFoundException;
+import io.ramlyburger.bazarflow.inventory.InventoryReservationService;
+import io.ramlyburger.bazarflow.ordering.OrderFulfillmentService;
 import io.ramlyburger.bazarflow.partner.OutletDeliveryWindow;
 import io.ramlyburger.bazarflow.partner.OutletDeliveryWindowService;
 import java.time.Duration;
@@ -30,6 +32,8 @@ class FulfillmentService {
 
 	private final PickWaveRepository pickWaveRepository;
 	private final DispatchJobRepository dispatchJobRepository;
+	private final InventoryReservationService inventoryReservationService;
+	private final OrderFulfillmentService orderFulfillmentService;
 	private final OutletDeliveryWindowService outletDeliveryWindowService;
 	private final JdbcTemplate jdbcTemplate;
 	private final ApplicationEventPublisher eventPublisher;
@@ -37,12 +41,16 @@ class FulfillmentService {
 	FulfillmentService(
 			PickWaveRepository pickWaveRepository,
 			DispatchJobRepository dispatchJobRepository,
+			InventoryReservationService inventoryReservationService,
+			OrderFulfillmentService orderFulfillmentService,
 			OutletDeliveryWindowService outletDeliveryWindowService,
 			JdbcTemplate jdbcTemplate,
 			ApplicationEventPublisher eventPublisher
 	) {
 		this.pickWaveRepository = pickWaveRepository;
 		this.dispatchJobRepository = dispatchJobRepository;
+		this.inventoryReservationService = inventoryReservationService;
+		this.orderFulfillmentService = orderFulfillmentService;
 		this.outletDeliveryWindowService = outletDeliveryWindowService;
 		this.jdbcTemplate = jdbcTemplate;
 		this.eventPublisher = eventPublisher;
@@ -111,6 +119,45 @@ class FulfillmentService {
 				.stream()
 				.map(FulfillmentService::toDispatchJobResponse)
 				.toList();
+	}
+
+	@Transactional
+	DispatchJobResponse completeDispatchJob(UUID dispatchJobId) {
+		DispatchJob dispatchJob = findDispatchJobForUpdate(dispatchJobId);
+		if (!dispatchJob.isOpenForOutcome()) {
+			throw new ConflictException(
+					"DISPATCH_JOB_NOT_COMPLETABLE",
+					"Only planned or in-progress dispatch jobs can be completed"
+			);
+		}
+
+		inventoryReservationService.consumeForOrder(dispatchJob.orderId());
+		orderFulfillmentService.markDelivered(dispatchJob.orderId());
+		dispatchJob.complete();
+		publishDispatchCompleted(dispatchJob);
+		return toDispatchJobResponse(dispatchJob);
+	}
+
+	@Transactional
+	DispatchJobResponse failDispatchJob(UUID dispatchJobId, FailDispatchJobRequest request) {
+		DispatchJob dispatchJob = findDispatchJobForUpdate(dispatchJobId);
+		if (!dispatchJob.isOpenForOutcome()) {
+			throw new ConflictException(
+					"DISPATCH_JOB_NOT_FAILABLE",
+					"Only planned or in-progress dispatch jobs can be failed"
+			);
+		}
+
+		String reason = normalizeFailureReason(request.reason());
+		orderFulfillmentService.markDeliveryFailed(dispatchJob.orderId(), reason);
+		dispatchJob.fail(reason);
+		publishDispatchFailed(dispatchJob);
+		return toDispatchJobResponse(dispatchJob);
+	}
+
+	private DispatchJob findDispatchJobForUpdate(UUID dispatchJobId) {
+		return dispatchJobRepository.findByIdForUpdate(dispatchJobId)
+				.orElseThrow(() -> new NotFoundException("DISPATCH_JOB_NOT_FOUND", "Dispatch job was not found"));
 	}
 
 	private List<AcceptedOrderCandidate> findAcceptedOrderCandidates(LocalDate deliveryDate, String deliveryZone) {
@@ -223,6 +270,39 @@ class FulfillmentService {
 		));
 	}
 
+	private void publishDispatchCompleted(DispatchJob dispatchJob) {
+		eventPublisher.publishEvent(AuditTrailEvent.record(
+				"fulfillment",
+				"ORDER",
+				dispatchJob.orderId(),
+				"DISPATCH_COMPLETED",
+				"Dispatch job completed",
+				Map.of(
+						"dispatchJobId", dispatchJob.id().toString(),
+						"orderNumber", dispatchJob.orderNumber(),
+						"status", dispatchJob.status().name(),
+						"completedAt", dispatchJob.completedAt().toString()
+				)
+		));
+	}
+
+	private void publishDispatchFailed(DispatchJob dispatchJob) {
+		eventPublisher.publishEvent(AuditTrailEvent.record(
+				"fulfillment",
+				"ORDER",
+				dispatchJob.orderId(),
+				"DISPATCH_FAILED",
+				"Dispatch job failed",
+				Map.of(
+						"dispatchJobId", dispatchJob.id().toString(),
+						"orderNumber", dispatchJob.orderNumber(),
+						"status", dispatchJob.status().name(),
+						"failedAt", dispatchJob.failedAt().toString(),
+						"reason", dispatchJob.failureReason()
+				)
+		));
+	}
+
 	private static PickWaveResponse toResponse(PickWave pickWave) {
 		return new PickWaveResponse(
 				pickWave.id(),
@@ -257,7 +337,10 @@ class FulfillmentService {
 				dispatchJob.status(),
 				dispatchJob.slaAtRisk(),
 				dispatchJob.slaRiskReason(),
-				dispatchJob.plannedAt()
+				dispatchJob.plannedAt(),
+				dispatchJob.completedAt(),
+				dispatchJob.failedAt(),
+				dispatchJob.failureReason()
 		);
 	}
 
@@ -269,6 +352,10 @@ class FulfillmentService {
 
 	private static String normalizeDeliveryZone(String deliveryZone) {
 		return deliveryZone.trim().toUpperCase(Locale.ROOT);
+	}
+
+	private static String normalizeFailureReason(String reason) {
+		return reason.trim();
 	}
 
 	private static String generateWaveNumber(LocalDate deliveryDate, String deliveryZone) {

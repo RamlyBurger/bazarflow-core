@@ -65,6 +65,15 @@ class DispatchJob {
 	@Column(name = "planned_at", nullable = false)
 	private Instant plannedAt;
 
+	@Column(name = "completed_at")
+	private Instant completedAt;
+
+	@Column(name = "failed_at")
+	private Instant failedAt;
+
+	@Column(name = "failure_reason", length = 160)
+	private String failureReason;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -134,6 +143,32 @@ class DispatchJob {
 		);
 	}
 
+	void complete() {
+		if (!isOpenForOutcome()) {
+			throw new IllegalStateException("Only open dispatch jobs can be completed");
+		}
+
+		this.status = DispatchJobStatus.COMPLETED;
+		this.completedAt = Instant.now();
+		this.failedAt = null;
+		this.failureReason = null;
+	}
+
+	void fail(String reason) {
+		if (!isOpenForOutcome()) {
+			throw new IllegalStateException("Only open dispatch jobs can be failed");
+		}
+
+		this.status = DispatchJobStatus.FAILED;
+		this.completedAt = null;
+		this.failedAt = Instant.now();
+		this.failureReason = reason;
+	}
+
+	boolean isOpenForOutcome() {
+		return status == DispatchJobStatus.PLANNED || status == DispatchJobStatus.IN_PROGRESS;
+	}
+
 	@PrePersist
 	void markCreated() {
 		Instant now = Instant.now();
@@ -196,5 +231,17 @@ class DispatchJob {
 
 	Instant plannedAt() {
 		return plannedAt;
+	}
+
+	Instant completedAt() {
+		return completedAt;
+	}
+
+	Instant failedAt() {
+		return failedAt;
+	}
+
+	String failureReason() {
+		return failureReason;
 	}
 }

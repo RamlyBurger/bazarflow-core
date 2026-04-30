@@ -2,6 +2,7 @@ package io.ramlyburger.bazarflow.fulfillment;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -132,6 +133,152 @@ class FulfillmentApiIntegrationTests {
 				.andExpect(jsonPath("$.errorCode").value("NO_ACCEPTED_ORDERS_READY"));
 	}
 
+	@Test
+	@WithMockUser(roles = "OPS_MANAGER")
+	void completesDispatchJobAndConsumesReservation() throws Exception {
+		LocalDate deliveryDate = LocalDate.now(ZoneOffset.UTC).plusDays(1);
+		UUID retailerId = createRetailer("Dispatch Complete Retailer", "DISPATCH-COMPLETE-REG-001");
+		UUID outletId = createOutlet(
+				retailerId,
+				"Dispatch Complete Outlet",
+				"north",
+				LocalTime.of(9, 0),
+				LocalTime.of(17, 0)
+		);
+		UUID skuId = createSku("DISPATCH-COMPLETE-SKU-001");
+		UUID priceBookId = createPriceBook("PB-DISPATCH-COMPLETE");
+		createRule(priceBookId, "DISPATCH-COMPLETE-PRICE", skuId, "10.00");
+		receiveLot(skuId, "DISPATCH-COMPLETE-LOT", "5.000", deliveryDate.plusDays(30));
+		UUID orderId = createAcceptedOrder(retailerId, outletId, skuId, deliveryDate);
+		JsonNode pickWave = createPickWave(deliveryDate, "north");
+		String dispatchJobId = firstDispatchJobId(pickWave);
+
+		mockMvc.perform(post("/api/fulfillment/dispatch-jobs/{dispatchJobId}/complete", dispatchJobId)
+						.header("X-Correlation-Id", "test-correlation-dispatch-complete"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(dispatchJobId))
+				.andExpect(jsonPath("$.orderId").value(orderId.toString()))
+				.andExpect(jsonPath("$.status").value("COMPLETED"))
+				.andExpect(jsonPath("$.completedAt", notNullValue()));
+
+		mockMvc.perform(get("/api/orders/{orderId}", orderId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("DELIVERED"));
+
+		mockMvc.perform(get("/api/inventory/reservations").param("orderId", orderId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].status").value("CONSUMED"));
+
+		mockMvc.perform(get("/api/inventory/availability").param("skuId", skuId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.availableQuantity").value(4.0))
+				.andExpect(jsonPath("$.reservedQuantity").value(0));
+
+		JsonNode lots = objectMapper.readTree(mockMvc.perform(get("/api/inventory/lots"))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString());
+		assertLotQuantities(lots, "DISPATCH-COMPLETE-LOT", "4.000", "0.000", "1.000");
+
+		mockMvc.perform(get("/api/orders/{orderId}/timeline", orderId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(4)))
+				.andExpect(jsonPath("$[3].fromStatus").value("ACCEPTED"))
+				.andExpect(jsonPath("$[3].toStatus").value("DELIVERED"));
+
+		mockMvc.perform(get("/api/audit/events")
+						.param("aggregateType", "ORDER")
+						.param("aggregateId", orderId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(8)))
+				.andExpect(jsonPath("$[5].eventType").value("INVENTORY_CONSUMED"))
+				.andExpect(jsonPath("$[6].eventType").value("ORDER_DELIVERED"))
+				.andExpect(jsonPath("$[7].eventType").value("DISPATCH_COMPLETED"))
+				.andExpect(jsonPath("$[7].correlationId").value("test-correlation-dispatch-complete"));
+
+		mockMvc.perform(post("/api/fulfillment/dispatch-jobs/{dispatchJobId}/complete", dispatchJobId))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.errorCode").value("DISPATCH_JOB_NOT_COMPLETABLE"));
+	}
+
+	@Test
+	@WithMockUser(roles = "OPS_MANAGER")
+	void failsDispatchJobAndKeepsReservationActive() throws Exception {
+		LocalDate deliveryDate = LocalDate.now(ZoneOffset.UTC).plusDays(2);
+		UUID retailerId = createRetailer("Dispatch Failure Retailer", "DISPATCH-FAIL-REG-001");
+		UUID outletId = createOutlet(
+				retailerId,
+				"Dispatch Failure Outlet",
+				"south",
+				LocalTime.of(9, 0),
+				LocalTime.of(17, 0)
+		);
+		UUID skuId = createSku("DISPATCH-FAIL-SKU-001");
+		UUID priceBookId = createPriceBook("PB-DISPATCH-FAIL");
+		createRule(priceBookId, "DISPATCH-FAIL-PRICE", skuId, "11.00");
+		receiveLot(skuId, "DISPATCH-FAIL-LOT", "5.000", deliveryDate.plusDays(30));
+		UUID orderId = createAcceptedOrder(retailerId, outletId, skuId, deliveryDate);
+		JsonNode pickWave = createPickWave(deliveryDate, "south");
+		String dispatchJobId = firstDispatchJobId(pickWave);
+
+		mockMvc.perform(post("/api/fulfillment/dispatch-jobs/{dispatchJobId}/fail", dispatchJobId)
+						.header("X-Correlation-Id", "test-correlation-dispatch-fail")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(Map.of(
+								"reason", "Outlet closed during delivery window"
+						))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(dispatchJobId))
+				.andExpect(jsonPath("$.orderId").value(orderId.toString()))
+				.andExpect(jsonPath("$.status").value("FAILED"))
+				.andExpect(jsonPath("$.failedAt", notNullValue()))
+				.andExpect(jsonPath("$.failureReason").value("Outlet closed during delivery window"));
+
+		mockMvc.perform(get("/api/orders/{orderId}", orderId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("DELIVERY_FAILED"));
+
+		mockMvc.perform(get("/api/inventory/reservations").param("orderId", orderId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].status").value("ACTIVE"));
+
+		mockMvc.perform(get("/api/inventory/availability").param("skuId", skuId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.availableQuantity").value(4.0))
+				.andExpect(jsonPath("$.reservedQuantity").value(1.0));
+
+		JsonNode lots = objectMapper.readTree(mockMvc.perform(get("/api/inventory/lots"))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString());
+		assertLotQuantities(lots, "DISPATCH-FAIL-LOT", "4.000", "1.000", "0.000");
+
+		mockMvc.perform(get("/api/orders/{orderId}/timeline", orderId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(4)))
+				.andExpect(jsonPath("$[3].fromStatus").value("ACCEPTED"))
+				.andExpect(jsonPath("$[3].toStatus").value("DELIVERY_FAILED"));
+
+		mockMvc.perform(get("/api/audit/events")
+						.param("aggregateType", "ORDER")
+						.param("aggregateId", orderId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(7)))
+				.andExpect(jsonPath("$[5].eventType").value("ORDER_DELIVERY_FAILED"))
+				.andExpect(jsonPath("$[6].eventType").value("DISPATCH_FAILED"))
+				.andExpect(jsonPath("$[6].correlationId").value("test-correlation-dispatch-fail"));
+
+		mockMvc.perform(post("/api/fulfillment/dispatch-jobs/{dispatchJobId}/fail", dispatchJobId)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(Map.of("reason", "Second attempt"))))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.errorCode").value("DISPATCH_JOB_NOT_FAILABLE"));
+	}
+
 	private UUID createAcceptedOrder(UUID retailerId, UUID outletId, UUID skuId, LocalDate deliveryDate) throws Exception {
 		UUID orderId = createDraftOrder(retailerId, outletId, skuId, deliveryDate)
 				.andExpect(status().isCreated())
@@ -147,6 +294,20 @@ class FulfillmentApiIntegrationTests {
 				.andExpect(jsonPath("$.status").value("ACCEPTED"));
 
 		return orderId;
+	}
+
+	private JsonNode createPickWave(LocalDate deliveryDate, String deliveryZone) throws Exception {
+		MvcResult result = mockMvc.perform(post("/api/fulfillment/pick-waves")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(new CreatePickWaveRequest(deliveryDate, deliveryZone))))
+				.andExpect(status().isCreated())
+				.andReturn();
+
+		return objectMapper.readTree(result.getResponse().getContentAsString());
+	}
+
+	private static String firstDispatchJobId(JsonNode pickWave) {
+		return pickWave.get("dispatchJobs").get(0).get("id").asText();
 	}
 
 	private OrderResultActions createDraftOrder(UUID retailerId, UUID outletId, UUID skuId, LocalDate deliveryDate) throws Exception {
@@ -312,5 +473,27 @@ class FulfillmentApiIntegrationTests {
 			JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
 			return UUID.fromString(response.get("id").asText());
 		}
+	}
+
+	private static void assertLotQuantities(
+			JsonNode lots,
+			String lotCode,
+			String expectedAvailableQuantity,
+			String expectedReservedQuantity,
+			String expectedDispatchedQuantity
+	) {
+		for (JsonNode lot : lots) {
+			if (lotCode.equals(lot.get("lotCode").asText())) {
+				assertThat(lot.get("availableQuantity").decimalValue())
+						.isEqualByComparingTo(new BigDecimal(expectedAvailableQuantity));
+				assertThat(lot.get("reservedQuantity").decimalValue())
+						.isEqualByComparingTo(new BigDecimal(expectedReservedQuantity));
+				assertThat(lot.get("dispatchedQuantity").decimalValue())
+						.isEqualByComparingTo(new BigDecimal(expectedDispatchedQuantity));
+				return;
+			}
+		}
+
+		throw new AssertionError("Lot was not found: " + lotCode);
 	}
 }

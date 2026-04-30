@@ -4,5 +4,7 @@ public enum OrderStatus {
 	DRAFT,
 	SUBMITTED,
 	ACCEPTED,
+	DELIVERED,
+	DELIVERY_FAILED,
 	CANCELLED
 }

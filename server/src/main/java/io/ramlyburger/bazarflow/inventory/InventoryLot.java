@@ -102,6 +102,15 @@ class InventoryLot {
 		this.reservedQuantity = this.reservedQuantity.add(quantity);
 	}
 
+	void consumeReserved(BigDecimal quantity) {
+		if (quantity.compareTo(BigDecimal.ZERO) <= 0 || reservedQuantity.compareTo(quantity) < 0) {
+			throw new IllegalStateException("Inventory lot does not have enough reserved quantity");
+		}
+
+		this.reservedQuantity = this.reservedQuantity.subtract(quantity);
+		this.dispatchedQuantity = this.dispatchedQuantity.add(quantity);
+	}
+
 	@PrePersist
 	void markCreated() {
 		Instant now = Instant.now();
