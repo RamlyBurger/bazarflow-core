@@ -54,9 +54,9 @@ This is not a generic ecommerce clone. The unique angle is distributor operation
 
 ## Current Implementation State
 
-The initial repository scaffold is in place. The backend now has module-boundary verification, PostgreSQL migrations, Spring Security method guards, problem-details error handling, request correlation IDs, partner APIs, catalog product/SKU APIs, inventory lot receiving with stock movement recording, pricing quote APIs, priced order draft/submission/acceptance APIs, expiry-aware stock reservation across inventory lots, fulfillment pick wave planning, dispatch completion/failure workflow, reservation consumption on completed dispatch, audit event lookup for order, inventory, and fulfillment changes, and reporting read models for operational dashboard data. These backend slices are covered by PostgreSQL-backed Testcontainers integration tests. The React operations console now reads platform status and dashboard summaries from live API endpoints with fallback data for disconnected local development.
+The initial repository scaffold is in place. The backend now has module-boundary verification, PostgreSQL migrations, Spring Security method guards, OAuth2 resource-server configuration, local Keycloak realm import, problem-details error handling, request correlation IDs, partner APIs, catalog product/SKU APIs, inventory lot receiving with stock movement recording, pricing quote APIs, priced order draft/submission/acceptance APIs, expiry-aware stock reservation across inventory lots, fulfillment pick wave planning, dispatch completion/failure workflow, reservation consumption on completed dispatch, audit event lookup for order, inventory, and fulfillment changes, and reporting read models for operational dashboard data. These backend slices are covered by PostgreSQL-backed Testcontainers integration tests. The React operations console reads platform status and dashboard summaries from live API endpoints with fallback data for disconnected local development.
 
-The next implementation slice should strengthen local security with a Keycloak realm export, demo users, role mappings, and Swagger authentication wiring.
+The next implementation slice should connect the operations console to the local Keycloak authorization-code flow so protected dashboard calls can run with the signed-in operator's bearer token.
 
 ## Engineering Scope
 

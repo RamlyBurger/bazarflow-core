@@ -1,0 +1,16 @@
+### Get ops manager access token
+POST http://localhost:8081/realms/bazarflow/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=bazarflow-ops-console&username=ops.manager&password=bazarflow
+
+### Get warehouse access token
+POST http://localhost:8081/realms/bazarflow/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=bazarflow-ops-console&username=warehouse.operator&password=bazarflow
+
+### Use a bearer token against a protected endpoint
+GET http://localhost:8080/api/reporting/dashboard
+Authorization: Bearer {{accessToken}}
+X-Correlation-Id: local-auth-dashboard

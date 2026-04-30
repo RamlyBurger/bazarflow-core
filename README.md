@@ -11,7 +11,7 @@ The backend focuses on the business-critical paths: order intake, inventory rese
 The repository currently includes:
 
 - Spring Boot 3.5.14 backend scaffolded with a Java 17+ baseline and Java 21 LTS verification
-- Spring Security, Flyway, PostgreSQL, Kafka, Springdoc, and internal module-boundary verification
+- Spring Security resource server, local Keycloak realm import, Flyway, PostgreSQL, Kafka, Springdoc, and internal module-boundary verification
 - Problem-details error responses and `X-Correlation-Id` propagation for API requests
 - Business module packages created for `common`, `identity`, `partner`, `catalog`, `inventory`, `pricing`, `ordering`, `fulfillment`, `audit`, and `reporting`
 - `GET /api/platform/status` exposes the current module map
@@ -24,6 +24,7 @@ The repository currently includes:
 - Audit APIs for order and inventory event lookup with request actor and correlation metadata
 - Reporting API for dashboard KPIs, work queue, risk watch, throughput, dispatch backlog, and audit timeline
 - React 19.2 and Vite 8.0 operations console connected to live platform and reporting endpoints, with local fallback data
+- Swagger bearer-token authentication wired to the local Keycloak realm
 - Docker Compose, Taskfile, ADRs, HTTP examples, and GitHub Actions CI added
 
 ## Tech Stack
@@ -88,7 +89,18 @@ Useful URLs:
 - Platform status: `http://localhost:8080/api/platform/status`
 - Reporting dashboard: `http://localhost:8080/api/reporting/dashboard`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Keycloak admin: `http://localhost:8081`
 - Ops console: `http://localhost:5173`
+
+Local Keycloak users use the password `bazarflow`:
+
+| Username | Role |
+|---|---|
+| `ops.manager` | `OPS_MANAGER` |
+| `warehouse.operator` | `WAREHOUSE` |
+| `sales.operator` | `SALES` |
+| `dispatch.operator` | `DISPATCH` |
+| `audit.viewer` | `AUDITOR` |
 
 ## Git Workflow
 

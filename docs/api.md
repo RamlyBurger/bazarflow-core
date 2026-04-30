@@ -8,9 +8,31 @@ GET /actuator/health
 GET /swagger-ui.html
 ```
 
+## Authentication
+
+Protected endpoints accept a Keycloak-issued JWT bearer token:
+
+```http
+Authorization: Bearer <access-token>
+```
+
+Docker Compose imports the local realm from `config/keycloak/bazarflow-realm.json` when Keycloak starts with an empty data store. The API validates tokens from `http://localhost:8081/realms/bazarflow` and maps both realm roles and `bazarflow-api` client roles to Spring Security authorities.
+
+Local users use the password `bazarflow`:
+
+| Username | Role |
+|---|---|
+| `ops.manager` | `OPS_MANAGER` |
+| `warehouse.operator` | `WAREHOUSE` |
+| `sales.operator` | `SALES` |
+| `dispatch.operator` | `DISPATCH` |
+| `audit.viewer` | `AUDITOR` |
+
+Swagger UI is configured for bearer authentication. Use the `bazarflow-ops-console` public client when authorizing through the local realm.
+
 ## Partner Endpoints
 
-Protected partner endpoints currently use Spring Security roles. Local tests use mock users; a full identity provider configuration will be wired in a later security slice.
+Partner endpoints use Spring Security roles. Local tests use mock users; local runtime tokens come from the Keycloak realm imported by Docker Compose.
 
 ```http
 POST  /api/retailers
