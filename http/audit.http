@@ -1,0 +1,11 @@
+### List recent audit events
+GET http://localhost:8080/api/audit/events?limit=50
+X-Correlation-Id: local-list-audit-events
+
+### List order audit events
+GET http://localhost:8080/api/audit/events?aggregateType=ORDER&aggregateId={{orderId}}
+X-Correlation-Id: local-order-audit-events
+
+### List SKU audit events
+GET http://localhost:8080/api/audit/events?aggregateType=SKU&aggregateId={{skuId}}
+X-Correlation-Id: local-sku-audit-events

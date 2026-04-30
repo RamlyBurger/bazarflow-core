@@ -121,4 +121,22 @@ Role access:
 
 Draft creation prices each order line through the pricing module. Submission requires an `Idempotency-Key` header, reserves stock through the inventory module, and records a status timeline entry. A blocked retailer cannot submit an order. If stock is insufficient, the order remains in draft state and inventory quantities are unchanged.
 
+Submitting an order also writes audit events for draft creation, stock reservation, and submission. Query `GET /api/audit/events?aggregateType=ORDER&aggregateId={orderId}` for an order-level operational timeline.
+
+## Audit Endpoints
+
+```http
+GET /api/audit/events
+GET /api/audit/events?aggregateType={aggregateType}
+GET /api/audit/events?aggregateType={aggregateType}&aggregateId={aggregateId}
+```
+
+Role access:
+
+| Endpoint | Roles |
+|---|---|
+| `GET /api/audit/events` | `OPS_MANAGER`, `AUDITOR` |
+
+Audit events are append-only records with source module, aggregate type, aggregate ID, event type, message, actor, correlation ID, details, and occurrence time. `limit` defaults to `100` and can be set from `1` to `500`.
+
 The API echoes `X-Correlation-Id` when provided and generates one when it is missing. Validation and business errors return RFC 9457-style problem details with an `errorCode` property.

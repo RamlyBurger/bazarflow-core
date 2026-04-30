@@ -31,3 +31,7 @@ X-Correlation-Id: local-submit-order
 ### Order timeline
 GET http://localhost:8080/api/orders/{{orderId}}/timeline
 X-Correlation-Id: local-order-timeline
+
+### Order audit events
+GET http://localhost:8080/api/audit/events?aggregateType=ORDER&aggregateId={{orderId}}
+X-Correlation-Id: local-order-audit-events

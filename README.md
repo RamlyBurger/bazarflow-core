@@ -20,6 +20,7 @@ The repository currently includes:
 - Inventory APIs for lot receiving, stock movement recording, SKU availability lookup, and reservation lookup
 - Pricing APIs for price books, deterministic SKU price rules, and quote calculation
 - Order APIs for priced draft creation, idempotent submission with stock reservation, order lookup, and status timeline
+- Audit APIs for order and inventory event lookup with request actor and correlation metadata
 - React 19.2 and Vite 8.0 operations console scaffolded with TanStack Query, Recharts, and Lucide icons
 - Docker Compose, Taskfile, ADRs, HTTP examples, and GitHub Actions CI added
 
