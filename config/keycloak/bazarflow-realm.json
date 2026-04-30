@@ -1,0 +1,165 @@
+{
+  "realm": "bazarflow",
+  "displayName": "BazarFlow",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "OPS_MANAGER",
+        "description": "Operations manager with cross-module write access"
+      },
+      {
+        "name": "WAREHOUSE",
+        "description": "Warehouse operator for receiving and inventory workflows"
+      },
+      {
+        "name": "SALES",
+        "description": "Sales operator for partner and order workflows"
+      },
+      {
+        "name": "DISPATCH",
+        "description": "Dispatch operator for fulfillment workflows"
+      },
+      {
+        "name": "AUDITOR",
+        "description": "Read-only audit and operational review access"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "bazarflow-api",
+      "name": "BazarFlow API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "bearerOnly": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true
+    },
+    {
+      "clientId": "bazarflow-ops-console",
+      "name": "BazarFlow Ops Console",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:5173/",
+        "http://localhost:5173/*",
+        "http://127.0.0.1:5173/",
+        "http://127.0.0.1:5173/*",
+        "http://localhost:8080/swagger-ui/*",
+        "http://localhost:8080/swagger-ui/oauth2-redirect.html"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8080"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "ops.manager",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Ops",
+      "lastName": "Manager",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "bazarflow",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "OPS_MANAGER"
+      ]
+    },
+    {
+      "username": "warehouse.operator",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Warehouse",
+      "lastName": "Operator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "bazarflow",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "WAREHOUSE"
+      ]
+    },
+    {
+      "username": "sales.operator",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Sales",
+      "lastName": "Operator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "bazarflow",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "SALES"
+      ]
+    },
+    {
+      "username": "dispatch.operator",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Dispatch",
+      "lastName": "Operator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "bazarflow",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "DISPATCH"
+      ]
+    },
+    {
+      "username": "audit.viewer",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Audit",
+      "lastName": "Viewer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "bazarflow",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "AUDITOR"
+      ]
+    }
+  ]
+}

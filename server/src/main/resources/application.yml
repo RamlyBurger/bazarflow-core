@@ -22,6 +22,22 @@ spring:
           time_zone: UTC
   jackson:
     time-zone: UTC
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${BAZARFLOW_SECURITY_ISSUER_URI:http://localhost:8081/realms/bazarflow}
+          jwk-set-uri: ${BAZARFLOW_SECURITY_JWK_SET_URI:http://localhost:8081/realms/bazarflow/protocol/openid-connect/certs}
+
+bazarflow:
+  security:
+    resource-client-id: ${BAZARFLOW_SECURITY_RESOURCE_CLIENT_ID:bazarflow-api}
+
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: ${BAZARFLOW_SWAGGER_CLIENT_ID:bazarflow-ops-console}
+      use-pkce-with-authorization-code-grant: true
 
 server:
   port: ${PORT:8080}
@@ -48,4 +64,4 @@ info:
   app:
     name: BazarFlow Core
     description: B2B chilled-food distribution operations platform
-    phase: phase-0-bootstrap
+    phase: active-development
