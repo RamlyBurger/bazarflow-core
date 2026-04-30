@@ -4,7 +4,7 @@ Research date: April 30, 2026
 
 Target repository: `RamlyBurger/bazarflow-core`
 
-Remote repository policy: create the GitHub repository empty first. Do not push planning or implementation files until Phase 0 starts.
+Remote repository policy: the GitHub repository was created empty first. Once Phase 0 implementation starts, push verified commits normally so work is backed up.
 
 ## Decision Summary
 

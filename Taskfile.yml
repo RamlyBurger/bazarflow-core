@@ -1,0 +1,56 @@
+version: "3"
+
+tasks:
+  setup:
+    desc: Install local project dependencies
+    cmds:
+      - task: server:resolve
+      - task: ui:install
+
+  up:
+    desc: Start local infrastructure
+    cmds:
+      - docker compose --env-file .env.example up -d
+
+  down:
+    desc: Stop local infrastructure
+    cmds:
+      - docker compose down
+
+  test:
+    desc: Run backend tests and frontend build checks
+    cmds:
+      - task: server:test
+      - task: ui:build
+
+  api:
+    desc: Run Spring Boot API
+    dir: server
+    cmds:
+      - ./mvnw spring-boot:run
+
+  ui:
+    desc: Run React ops console
+    dir: ops-console
+    cmds:
+      - npm run dev
+
+  server:resolve:
+    dir: server
+    cmds:
+      - ./mvnw -q -DskipTests dependency:go-offline
+
+  server:test:
+    dir: server
+    cmds:
+      - ./mvnw test
+
+  ui:install:
+    dir: ops-console
+    cmds:
+      - npm install
+
+  ui:build:
+    dir: ops-console
+    cmds:
+      - npm run build

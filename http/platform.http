@@ -1,0 +1,5 @@
+### Platform status
+GET http://localhost:8080/api/platform/status
+
+### Health
+GET http://localhost:8080/actuator/health
