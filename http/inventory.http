@@ -1,0 +1,20 @@
+### Receive inventory lot
+POST http://localhost:8080/api/inventory/lots
+Content-Type: application/json
+X-Correlation-Id: local-receive-lot
+
+{
+  "skuId": "{{skuId}}",
+  "lotCode": "LOT-A1",
+  "warehouseCode": "MAIN-WAREHOUSE",
+  "receivedQuantity": 25.500,
+  "expiryDate": "2030-12-31"
+}
+
+### List inventory lots
+GET http://localhost:8080/api/inventory/lots
+X-Correlation-Id: local-list-lots
+
+### SKU availability
+GET http://localhost:8080/api/inventory/availability?skuId={{skuId}}
+X-Correlation-Id: local-sku-availability

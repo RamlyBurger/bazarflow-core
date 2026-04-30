@@ -1,0 +1,50 @@
+### Create product
+POST http://localhost:8080/api/products
+Content-Type: application/json
+X-Correlation-Id: local-create-product
+
+{
+  "name": "Frozen Dumplings",
+  "category": "Frozen Meals",
+  "description": "Frozen prepared meal item",
+  "metadata": {
+    "coldChain": true,
+    "packFormat": "bag"
+  }
+}
+
+### List products
+GET http://localhost:8080/api/products
+X-Correlation-Id: local-list-products
+
+### Create SKU
+POST http://localhost:8080/api/skus
+Content-Type: application/json
+X-Correlation-Id: local-create-sku
+
+{
+  "productId": "{{productId}}",
+  "skuCode": "FD-500G",
+  "name": "Frozen Dumplings 500g",
+  "unitOfMeasure": "pack",
+  "storageClass": "FROZEN",
+  "shelfLifeDays": 180,
+  "barcode": "9550000000010"
+}
+
+### List SKUs
+GET http://localhost:8080/api/skus
+X-Correlation-Id: local-list-skus
+
+### Get SKU
+GET http://localhost:8080/api/skus/{{skuId}}
+X-Correlation-Id: local-get-sku
+
+### Update SKU status
+PATCH http://localhost:8080/api/skus/{{skuId}}/status
+Content-Type: application/json
+X-Correlation-Id: local-update-sku-status
+
+{
+  "status": "DISCONTINUED"
+}

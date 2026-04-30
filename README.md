@@ -16,6 +16,8 @@ The repository currently includes:
 - Business module packages created for `common`, `identity`, `partner`, `catalog`, `inventory`, `pricing`, `ordering`, `fulfillment`, `audit`, and `reporting`
 - `GET /api/platform/status` exposes the current module map
 - Partner APIs for retailer creation, retailer lookup, outlet creation, and credit-status updates
+- Catalog APIs for products, SKUs, storage classes, and SKU lifecycle status
+- Inventory APIs for lot receiving, stock movement recording, and SKU availability lookup
 - React 19.2 and Vite 8.0 operations console scaffolded with TanStack Query, Recharts, and Lucide icons
 - Docker Compose, Taskfile, ADRs, HTTP examples, and GitHub Actions CI added
 
