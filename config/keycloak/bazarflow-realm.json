@@ -79,6 +79,7 @@
     {
       "username": "ops.manager",
       "enabled": true,
+      "email": "ops.manager@bazarflow.local",
       "emailVerified": true,
       "firstName": "Ops",
       "lastName": "Manager",
@@ -96,6 +97,7 @@
     {
       "username": "warehouse.operator",
       "enabled": true,
+      "email": "warehouse.operator@bazarflow.local",
       "emailVerified": true,
       "firstName": "Warehouse",
       "lastName": "Operator",
@@ -113,6 +115,7 @@
     {
       "username": "sales.operator",
       "enabled": true,
+      "email": "sales.operator@bazarflow.local",
       "emailVerified": true,
       "firstName": "Sales",
       "lastName": "Operator",
@@ -130,6 +133,7 @@
     {
       "username": "dispatch.operator",
       "enabled": true,
+      "email": "dispatch.operator@bazarflow.local",
       "emailVerified": true,
       "firstName": "Dispatch",
       "lastName": "Operator",
@@ -147,6 +151,7 @@
     {
       "username": "audit.viewer",
       "enabled": true,
+      "email": "audit.viewer@bazarflow.local",
       "emailVerified": true,
       "firstName": "Audit",
       "lastName": "Viewer",
