@@ -1,0 +1,3 @@
+### Dashboard summary
+GET http://localhost:8080/api/reporting/dashboard
+X-Correlation-Id: local-reporting-dashboard

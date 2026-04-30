@@ -22,7 +22,8 @@ The repository currently includes:
 - Order APIs for priced draft creation, idempotent submission with stock reservation, acceptance, delivery outcomes, order lookup, and status timeline
 - Fulfillment APIs for pick wave generation, planned dispatch jobs, completion/failure recording, reservation consumption, and SLA-risk lookup
 - Audit APIs for order and inventory event lookup with request actor and correlation metadata
-- React 19.2 and Vite 8.0 operations console scaffolded with TanStack Query, Recharts, and Lucide icons
+- Reporting API for dashboard KPIs, work queue, risk watch, throughput, dispatch backlog, and audit timeline
+- React 19.2 and Vite 8.0 operations console connected to live platform and reporting endpoints, with local fallback data
 - Docker Compose, Taskfile, ADRs, HTTP examples, and GitHub Actions CI added
 
 ## Tech Stack
@@ -85,6 +86,7 @@ Useful URLs:
 
 - API health: `http://localhost:8080/actuator/health`
 - Platform status: `http://localhost:8080/api/platform/status`
+- Reporting dashboard: `http://localhost:8080/api/reporting/dashboard`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - Ops console: `http://localhost:5173`
 

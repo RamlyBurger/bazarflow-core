@@ -151,6 +151,20 @@ Pick wave creation selects accepted orders for the requested delivery date and d
 
 Completing a dispatch job changes the job to `COMPLETED`, consumes the order reservation, moves the order to `DELIVERED`, and writes inventory, ordering, and fulfillment audit events in the same transaction. Failing a dispatch job changes the job to `FAILED`, records a failure reason, moves the order to `DELIVERY_FAILED`, and keeps the reservation active for later operational handling.
 
+## Reporting Endpoints
+
+```http
+GET /api/reporting/dashboard
+```
+
+Role access:
+
+| Endpoint | Roles |
+|---|---|
+| `GET /api/reporting/dashboard` | `OPS_MANAGER`, `WAREHOUSE`, `SALES`, `DISPATCH`, `AUDITOR` |
+
+The dashboard endpoint is a read-only projection over the existing operational schemas. It returns KPI cards, work queue rows, risk watch items, seven-day throughput, dispatch backlog by zone, and recent audit timeline entries. The React operations console uses this endpoint when the API is available and keeps a local fallback for disconnected development.
+
 ## Audit Endpoints
 
 ```http
