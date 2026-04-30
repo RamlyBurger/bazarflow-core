@@ -1,4 +1,4 @@
-# ADR 0004: Use Spring Modulith Events
+# ADR 0004: Use Internal Domain Events
 
 ## Status
 
@@ -10,7 +10,7 @@ Ordering, inventory, fulfillment, audit, and reporting need to react to workflow
 
 ## Decision
 
-Use Spring application events and Spring Modulith publication support for internal events first. Externalize selected events to Kafka after core workflows are implemented.
+Use Spring application events with Spring Modulith publication support internally first. Externalize selected events to Kafka after core workflows are implemented.
 
 ## Consequences
 

@@ -12,13 +12,13 @@ Remote repository policy: the GitHub repository was created empty first. Once Ph
 
 The first implementation target is:
 
-`Java 21 + Spring Boot 3.5.14 + Spring Modulith 1.4.11 + PostgreSQL 18.3 + Keycloak 26.6.1 + React 19.2 + Vite 8.0.x ops console`
+`Java 17+ baseline, Java 21 LTS verified + Spring Boot 3.5.14 + PostgreSQL 18.3 + Keycloak 26.6.1 + React 19.2 + Vite 8.0.x ops console`
 
 Reasoning:
 
-- Spring Boot 4.0.x is current stable, but it is a major migration line. Spring's own release notes recommend upgrading to Spring Boot 3.5 before migrating to 4.0. For a portfolio system that should run cleanly with Springdoc, Testcontainers, Keycloak, and common enterprise examples, Spring Boot 3.5.14 is the stronger first implementation target.
-- Java 21 is an LTS JDK and a stronger hiring signal than Java 17 while still staying compatible with Spring Boot 3.5.
-- Spring Modulith 2.x is now the current stable generation, but it moved to a Spring Boot 4 / Spring Framework 7 baseline. For the Spring Boot 3.5 path, use Spring Modulith 1.4.11 first and plan a later Boot 4 + Modulith 2.x upgrade branch.
+- Spring Boot 4.0.x is current stable, but it is a major migration line. Spring's own release notes recommend upgrading to Spring Boot 3.5 before migrating to 4.0. For a first implementation that should run cleanly with Springdoc, Testcontainers, Keycloak, and common enterprise integrations, Spring Boot 3.5.14 is the stronger first implementation target.
+- Spring Boot 3.5 supports Java 17 or later. The code should keep a Java 17+ baseline and be tested on Java 21 LTS.
+- Spring Modulith 2.x is now the current stable generation, but it moved to a Spring Boot 4 / Spring Framework 7 baseline. For the Spring Boot 3.5 path, use Spring Modulith 1.4.11 internally for module verification and event publication, then plan a later Boot 4 + Modulith 2.x upgrade branch.
 - A modular monolith gives clear module boundaries, event-driven design, integration tests, and realistic domain complexity without requiring the operational overhead of six services from day one.
 - Kafka will still be included, but as event externalization after the core module events work locally.
 
@@ -36,7 +36,7 @@ All future implementation work should be backed up with Git in small, understand
 
 ## Product Concept
 
-`BazarFlow Core` is a B2B ordering and fulfillment platform for Malaysian chilled and frozen food distributors supplying small retailers, cafes, and convenience stores.
+`BazarFlow Core` is a B2B ordering and fulfillment platform for chilled and frozen food distributors supplying small retailers, cafes, and convenience stores.
 
 The system handles:
 
@@ -52,22 +52,21 @@ The system handles:
 
 This is not a generic ecommerce clone. The unique angle is distributor operations: expiry-aware stock allocation, delivery SLA risk, batch traceability, and operational auditability.
 
-## Market Keyword Coverage
+## Engineering Scope
 
-| Hiring keyword | How this project proves it |
+| Area | Implementation notes |
 |---|---|
-| `Java` | Java 21 backend with domain model, tests, and CI |
+| `Java` | Java 17+ backend baseline with Java 21 LTS CI verification |
 | `Spring Boot` | Spring Boot API, security, actuator, validation, data access |
-| `Microservices` | Modular monolith boundaries that can evolve into services |
+| `Architecture` | Spring Boot modular monolith with service-extraction boundaries |
 | `Spring Security` | OAuth2 Resource Server with Keycloak-issued JWTs |
 | `REST API` | OpenAPI 3.1, Swagger UI, HTTP examples |
-| `PostgreSQL` | normalized schema, JSONB metadata, indexes, constraints |
+| `PostgreSQL` | normalized schema, selective JSONB metadata, indexes, constraints |
 | `Kafka` | event externalization, retry, dead-letter topics |
 | `Docker` | full local stack using Docker Compose |
 | `Testcontainers` | integration tests against real PostgreSQL, Redis, Kafka |
-| `CI/CD` | GitHub Actions build, test, image, scan |
+| `CI/CD` | GitHub Actions primary pipeline, optional Jenkinsfile later |
 | `Observability` | actuator, Micrometer, Prometheus endpoint, trace IDs |
-| `Data engineering` | event/audit tables and operational reporting endpoints |
 | `Security` | RBAC, idempotency, audit hash chain, rate limiting plan |
 
 ## Research Notes
@@ -77,6 +76,7 @@ This is not a generic ecommerce clone. The unique angle is distributor operation
 - Spring Boot 4.0.6 is listed as current stable in the Spring docs and requires Java 17 or later, compatible up to Java 26.
 - Spring Boot 3.5.14 was released on April 23, 2026 with bug fixes, documentation improvements, dependency upgrades, and CVE fixes.
 - Spring Boot 3.5 requires Java 17 or later and is compatible up to Java 25.
+- Java positioning for this repository should be Java 17+ baseline, verified on Java 21 LTS.
 - Spring Boot's dependency management should be trusted; avoid overriding managed dependency versions unless necessary.
 - Spring Modulith 2.0.6 is the current stable generation, but Spring Modulith 2.0 GA upgraded its baseline to Spring Boot 4 and Spring Framework 7.
 - Spring Modulith 1.4.11 remains the right line for the Spring Boot 3.5.14 implementation path. Import `org.springframework.modulith:spring-modulith-bom:1.4.11`.
@@ -85,6 +85,7 @@ This is not a generic ecommerce clone. The unique angle is distributor operation
 - Testcontainers Java 2.0.x supports JUnit 5 containers for real dependency integration tests.
 - Flyway validates migration names, types, and checksums against applied migrations; migration files must be treated as immutable after merge.
 - PostgreSQL 18.3 is the current 18.x minor release, and PostgreSQL 18 supports JSONB GIN indexing with `jsonb_ops` and `jsonb_path_ops`, with different tradeoffs for key-existence versus containment queries.
+- PostgreSQL is the primary implementation database. Core relational modeling should stay portable where practical so the model can be adapted to MySQL or Oracle if needed. PostgreSQL-specific features such as JSONB should be isolated and documented.
 - Keycloak downloads page lists 26.6.1 as the current server download on April 30, 2026. Keycloak JavaScript adapters and Java client libraries have separate versioning, so do not assume client artifacts share the server version.
 - React 19.2 is available and includes `Activity`, `useEffectEvent`, and updated React Hooks lint behavior.
 - Vite's supported versions on April 30, 2026 are `vite@8.0`, `vite@7.3`, and `vite@6.4`; the docs show `v8.0.10` as current, so pin to the 8.0 minor unless ecosystem friction appears.
@@ -104,7 +105,7 @@ This is not a generic ecommerce clone. The unique angle is distributor operation
 - `awesome-readme-examples`
   - Useful for presentation expectations: badges, architecture image, quickstart, screenshots, and readable sections.
 
-## Revision From The Earlier Portfolio Plan
+## Revision From The Earlier Architecture Plan
 
 The original high-level plan described `bazarflow-core` as event-driven B2B fulfillment. That remains correct.
 
@@ -117,7 +118,7 @@ The revised implementation structure is:
 - externalize selected events to Kafka after the business workflow works
 - include a small React ops console for visual demonstration
 
-This keeps the project deep, finishable, and presentable.
+This keeps the project deep, finishable, and operationally coherent.
 
 ## System Architecture
 
@@ -474,7 +475,7 @@ Purpose:
 
 - append-only operational audit
 - tamper-evident event chain
-- event timeline for recruiter-friendly demo
+- event timeline for operational traceability
 
 Entities:
 
@@ -501,6 +502,13 @@ Do not overbuild a full warehouse in this repo. The separate `techpulse-my` and 
 ## Database Design
 
 Use one PostgreSQL database with schemas per module.
+
+RDBMS portability note:
+
+- PostgreSQL is the primary implementation target.
+- Keep the core domain schema normalized and portable where practical.
+- Isolate PostgreSQL-specific features such as JSONB and GIN indexes behind clearly named columns, queries, and documentation.
+- If the deployment environment requires MySQL or Oracle later, migrate core tables first and revisit only the PostgreSQL-specific reporting and audit search paths.
 
 Schemas:
 
@@ -781,7 +789,7 @@ Where:
 - `cold_chain_penalty` applies to frozen/chilled goods
 - `route_capacity_fit_bonus` reduces risk if the job fits an existing route
 
-This is not a full vehicle-routing solver. It is an operations-friendly heuristic that can be explained in the README.
+This is not a full vehicle-routing solver. It is an operations-oriented heuristic that can be explained in the README.
 
 ### 6. Event Publication And Kafka Externalization
 
@@ -1028,7 +1036,7 @@ Controls:
 
 ## Frontend Ops Console
 
-The frontend is not a marketing page. It should look like a real internal operations tool.
+The frontend is not a landing page. It should look like a real internal operations tool.
 
 Stack:
 
@@ -1067,7 +1075,7 @@ Avoid:
 - giant landing page hero
 - decorative gradient blobs
 - generic purple admin theme
-- empty cards with marketing copy
+- empty cards with promotional copy
 
 ### Dashboard Layout
 
@@ -1123,7 +1131,8 @@ Version alignment:
 
 - Spring Boot parent: `3.5.14`
 - Spring Modulith BOM: `1.4.11`
-- Java: `21`
+- Java baseline: `17+`
+- Java verification target: `21 LTS`
 - PostgreSQL Docker image: `postgres:18.3`
 - Keycloak Docker image: `quay.io/keycloak/keycloak:26.6.1`
 - Vite: pin to `8.0.x`
@@ -1209,7 +1218,7 @@ Use:
 
 ### Frontend Tests
 
-MVP:
+Initial scope:
 
 - smoke test that dashboard renders
 - API client contract types compile
@@ -1221,12 +1230,12 @@ Later:
 
 ## CI Plan
 
-GitHub Actions workflow:
+GitHub Actions primary workflow:
 
 ```text
 on pull request and push:
   checkout
-  setup JDK 21
+  setup JDK 17 and JDK 21 matrix for backend tests
   setup Node LTS
   cache Maven
   cache npm
@@ -1239,6 +1248,7 @@ on pull request and push:
 
 Optional hardening:
 
+- Jenkinsfile for environments that require Jenkins
 - dependency review
 - Trivy filesystem scan
 - secret scan with Gitleaks
@@ -1377,7 +1387,7 @@ Deliverables:
 
 Exit criteria:
 
-- recruiter can see the system working within 30 seconds
+- an operator can understand system state within 30 seconds
 - UI uses live backend data
 - screenshots are good enough for README
 
@@ -1416,7 +1426,7 @@ Exit criteria:
 - README has observability screenshot
 - audit verification demo works
 
-### Phase 9: Portfolio Polish
+### Phase 9: Release Polish
 
 Duration: 2-3 days
 
@@ -1432,7 +1442,7 @@ Deliverables:
 
 Exit criteria:
 
-- a recruiter can clone and run the system
+- a new developer can clone and run the system
 - the repo clearly shows Java, Spring Boot, PostgreSQL, Docker, tests, security, and operational thinking
 
 ## Demo Scenario
@@ -1476,18 +1486,16 @@ The final README should include:
 Recommended README opening:
 
 ```text
-BazarFlow Core is an internal SaaS MVP for chilled and frozen food distributors. The practical business problem is simple: many small distributors still coordinate orders, stock, expiry dates, pricing, and delivery through Excel sheets, WhatsApp messages, and manual checks. Once SKUs, batches, outlets, and delivery windows grow, that workflow becomes hard to audit and easy to break.
+BazarFlow Core is an internal operations platform for chilled and frozen food distributors. The practical business problem is simple: many distributors still coordinate orders, stock, expiry dates, pricing, and delivery through spreadsheets, chat messages, and manual checks. Once SKUs, batches, outlets, and delivery windows grow, that workflow becomes hard to audit and easy to break.
 
-This project turns that realistic operations problem into a production-style Java system. It demonstrates Java 21, Spring Boot, Spring Modulith, PostgreSQL, OAuth2 security, idempotent order submission, expiry-aware inventory reservation, event-driven workflows, and a React operations dashboard.
+The system is built as a Spring Boot modular monolith with clear module boundaries and a path to service extraction later. It covers OAuth2 security, idempotent order submission, expiry-aware inventory reservation, event-driven workflows, PostgreSQL persistence, and a React operations dashboard.
 
-Interview positioning: this can be explained as an MVP for a chilled-food wholesale operation that had outgrown spreadsheets. The backend focuses on the business-critical paths: order intake, inventory reservation, batch expiry, pricing, delivery planning, auditability, and operations reporting.
-
-Technically, it is also a focused Java 21 and Spring Modulith practice project. The main backend emphasis is module boundaries, idempotent order commands, inventory consistency, security, audit integrity, and testable domain logic. The frontend is an operations dashboard designed for staff who need to scan risk and act quickly.
+The backend focuses on the business-critical paths: order intake, inventory reservation, batch expiry, pricing, delivery planning, auditability, and operations reporting. The frontend is designed for staff who need to scan risk and act quickly.
 ```
 
 ## Definition Of Done
 
-The project is not portfolio-ready until:
+The project is not ready for first release until:
 
 - `docker compose up` starts the full local stack
 - backend tests pass
@@ -1509,6 +1517,13 @@ Use Spring Boot 3.5.14 first:
 - pro: easier Springdoc, Modulith, Keycloak examples
 - con: not the newest Spring Boot major
 - mitigation: add an ADR and create a later `spring-boot-4-upgrade` branch
+
+Use Java 17+ baseline with Java 21 verification:
+
+- pro: works in Java 17 runtime environments
+- pro: still verifies compatibility on a modern LTS JDK
+- con: avoids Java 21-only language features in core code
+- mitigation: keep the code simple and revisit the baseline if deployment requirements change
 
 Use modular monolith first:
 

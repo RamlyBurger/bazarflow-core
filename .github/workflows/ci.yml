@@ -7,8 +7,12 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  backend:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java-version: ["17", "21"]
 
     steps:
       - name: Checkout
@@ -18,8 +22,19 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: ${{ matrix.java-version }}
           cache: maven
+
+      - name: Backend tests
+        working-directory: server
+        run: ./mvnw test
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -27,10 +42,6 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: ops-console/package-lock.json
-
-      - name: Backend tests
-        working-directory: server
-        run: ./mvnw test
 
       - name: Frontend install
         working-directory: ops-console

@@ -1,6 +1,6 @@
 # Contributing
 
-This repository is being built as a portfolio-grade modular monolith. Keep changes small, tested, and easy to review.
+This repository is being built as a modular Spring Boot application. Keep changes small, tested, and easy to review.
 
 ## Workflow
 

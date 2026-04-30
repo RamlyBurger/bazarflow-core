@@ -1,6 +1,6 @@
 # Architecture
 
-BazarFlow Core starts as a modular monolith because the first goal is strong business modeling, clear module boundaries, and a runnable local system. The architecture keeps service extraction possible later without paying distributed-systems costs during the MVP.
+BazarFlow Core starts as a modular monolith because the first goal is strong business modeling, clear module boundaries, and a runnable local system. The architecture keeps service extraction possible later without paying distributed-systems costs before the core workflows are stable.
 
 ## Runtime Shape
 

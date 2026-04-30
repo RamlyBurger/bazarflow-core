@@ -6,7 +6,7 @@ Accepted.
 
 ## Context
 
-The system needs realistic domain depth across ordering, inventory, pricing, fulfillment, audit, and reporting. Splitting those concerns into services before the core workflow exists would add infrastructure work without improving the first portfolio outcome.
+The system needs realistic domain depth across ordering, inventory, pricing, fulfillment, audit, and reporting. Splitting those concerns into services before the core workflow exists would add infrastructure work before the domain behavior is stable.
 
 ## Decision
 
