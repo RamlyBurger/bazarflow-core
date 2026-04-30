@@ -1,0 +1,33 @@
+### Create priced draft order
+POST http://localhost:8080/api/orders
+Content-Type: application/json
+X-Correlation-Id: local-create-order
+
+{
+  "retailerId": "{{retailerId}}",
+  "outletId": "{{outletId}}",
+  "requestedDeliveryDate": "2030-12-31",
+  "lines": [
+    {
+      "skuId": "{{skuId}}",
+      "quantity": 3.000
+    }
+  ]
+}
+
+### List orders
+GET http://localhost:8080/api/orders
+X-Correlation-Id: local-list-orders
+
+### Get order
+GET http://localhost:8080/api/orders/{{orderId}}
+X-Correlation-Id: local-get-order
+
+### Submit order
+POST http://localhost:8080/api/orders/{{orderId}}/submit
+Idempotency-Key: local-submit-order-1
+X-Correlation-Id: local-submit-order
+
+### Order timeline
+GET http://localhost:8080/api/orders/{{orderId}}/timeline
+X-Correlation-Id: local-order-timeline

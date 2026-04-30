@@ -1,0 +1,51 @@
+### Create price book
+POST http://localhost:8080/api/pricing/price-books
+Content-Type: application/json
+X-Correlation-Id: local-create-price-book
+
+{
+  "code": "PB-DEFAULT",
+  "name": "Default Price Book",
+  "currency": "MYR",
+  "validFrom": "2026-01-01"
+}
+
+### List price books
+GET http://localhost:8080/api/pricing/price-books
+X-Correlation-Id: local-list-price-books
+
+### Create price rule
+POST http://localhost:8080/api/pricing/rules
+Content-Type: application/json
+X-Correlation-Id: local-create-price-rule
+
+{
+  "priceBookId": "{{priceBookId}}",
+  "ruleCode": "FD-500G-BASE",
+  "description": "Base price for frozen dumplings",
+  "skuId": "{{skuId}}",
+  "minQuantity": 0,
+  "unitPrice": 12.50,
+  "priority": 10,
+  "validFrom": "2026-01-01"
+}
+
+### List price rules
+GET http://localhost:8080/api/pricing/rules
+X-Correlation-Id: local-list-price-rules
+
+### Quote price
+POST http://localhost:8080/api/pricing/quote
+Content-Type: application/json
+X-Correlation-Id: local-price-quote
+
+{
+  "retailerId": "{{retailerId}}",
+  "deliveryZone": "NORTH",
+  "items": [
+    {
+      "skuId": "{{skuId}}",
+      "quantity": 3.000
+    }
+  ]
+}

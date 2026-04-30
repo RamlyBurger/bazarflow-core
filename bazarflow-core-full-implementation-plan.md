@@ -54,9 +54,9 @@ This is not a generic ecommerce clone. The unique angle is distributor operation
 
 ## Current Implementation State
 
-The initial repository scaffold is in place. The backend now has module-boundary verification, PostgreSQL migrations, Spring Security method guards, problem-details error handling, request correlation IDs, partner APIs, catalog product/SKU APIs, and inventory lot receiving with stock movement recording. These backend slices are covered by PostgreSQL-backed Testcontainers integration tests.
+The initial repository scaffold is in place. The backend now has module-boundary verification, PostgreSQL migrations, Spring Security method guards, problem-details error handling, request correlation IDs, partner APIs, catalog product/SKU APIs, inventory lot receiving with stock movement recording, pricing quote APIs, and priced order draft/submission APIs. These backend slices are covered by PostgreSQL-backed Testcontainers integration tests.
 
-The next implementation slice should add pricing foundation and order draft/submission scaffolding before expiry-aware reservation is built on top of the inventory lots.
+The next implementation slice should add expiry-aware reservation on top of submitted orders and available inventory lots, then record reservation movement events.
 
 ## Engineering Scope
 

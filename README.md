@@ -18,6 +18,8 @@ The repository currently includes:
 - Partner APIs for retailer creation, retailer lookup, outlet creation, and credit-status updates
 - Catalog APIs for products, SKUs, storage classes, and SKU lifecycle status
 - Inventory APIs for lot receiving, stock movement recording, and SKU availability lookup
+- Pricing APIs for price books, deterministic SKU price rules, and quote calculation
+- Order APIs for priced draft creation, idempotent submission, order lookup, and status timeline
 - React 19.2 and Vite 8.0 operations console scaffolded with TanStack Query, Recharts, and Lucide icons
 - Docker Compose, Taskfile, ADRs, HTTP examples, and GitHub Actions CI added
 
