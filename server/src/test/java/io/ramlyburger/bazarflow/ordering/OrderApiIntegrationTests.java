@@ -122,6 +122,20 @@ class OrderApiIntegrationTests {
 				.andExpect(jsonPath("$[0].lines[1].lotCode").value("ORDER-FEFO-LATE"))
 				.andExpect(jsonPath("$[0].lines[1].quantity").value(1.0));
 
+		mockMvc.perform(get("/api/audit/events")
+						.param("aggregateType", "ORDER")
+						.param("aggregateId", orderId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(3)))
+				.andExpect(jsonPath("$[0].eventType").value("ORDER_DRAFT_CREATED"))
+				.andExpect(jsonPath("$[0].sourceModule").value("ordering"))
+				.andExpect(jsonPath("$[1].eventType").value("INVENTORY_RESERVED"))
+				.andExpect(jsonPath("$[1].sourceModule").value("inventory"))
+				.andExpect(jsonPath("$[1].details.reservationId", notNullValue()))
+				.andExpect(jsonPath("$[1].details.totalQuantity").value("3.000"))
+				.andExpect(jsonPath("$[2].eventType").value("ORDER_SUBMITTED"))
+				.andExpect(jsonPath("$[2].actor").value("user"));
+
 		mockMvc.perform(get("/api/orders/{orderId}/timeline", orderId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(2)))

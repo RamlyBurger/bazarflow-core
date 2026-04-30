@@ -1,5 +1,6 @@
 package io.ramlyburger.bazarflow.ordering;
 
+import io.ramlyburger.bazarflow.common.AuditTrailEvent;
 import io.ramlyburger.bazarflow.common.BusinessException;
 import io.ramlyburger.bazarflow.common.ConflictException;
 import io.ramlyburger.bazarflow.common.NotFoundException;
@@ -19,8 +20,10 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -38,6 +41,7 @@ class OrderService {
 	private final InventoryReservationService inventoryReservationService;
 	private final PricingService pricingService;
 	private final JdbcTemplate jdbcTemplate;
+	private final ApplicationEventPublisher eventPublisher;
 
 	OrderService(
 			CustomerOrderRepository orderRepository,
@@ -45,7 +49,8 @@ class OrderService {
 			IdempotencyRecordRepository idempotencyRecordRepository,
 			InventoryReservationService inventoryReservationService,
 			PricingService pricingService,
-			JdbcTemplate jdbcTemplate
+			JdbcTemplate jdbcTemplate,
+			ApplicationEventPublisher eventPublisher
 	) {
 		this.orderRepository = orderRepository;
 		this.statusHistoryRepository = statusHistoryRepository;
@@ -53,6 +58,7 @@ class OrderService {
 		this.inventoryReservationService = inventoryReservationService;
 		this.pricingService = pricingService;
 		this.jdbcTemplate = jdbcTemplate;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional
@@ -95,6 +101,7 @@ class OrderService {
 
 		CustomerOrder savedOrder = orderRepository.save(order);
 		statusHistoryRepository.save(OrderStatusHistory.created(savedOrder.id(), "Draft created", "system"));
+		publishDraftCreated(savedOrder);
 		return toResponse(savedOrder);
 	}
 
@@ -165,6 +172,7 @@ class OrderService {
 				order.id(),
 				order.id()
 		));
+		publishSubmitted(order);
 
 		return toResponse(order);
 	}
@@ -332,6 +340,38 @@ class OrderService {
 				history.changedBy(),
 				history.changedAt()
 		);
+	}
+
+	private void publishDraftCreated(CustomerOrder order) {
+		eventPublisher.publishEvent(AuditTrailEvent.record(
+				"ordering",
+				"ORDER",
+				order.id(),
+				"ORDER_DRAFT_CREATED",
+				"Draft order created",
+				Map.of(
+						"orderNumber", order.orderNumber(),
+						"retailerId", order.retailerId().toString(),
+						"outletId", order.outletId().toString(),
+						"currency", order.currency(),
+						"subtotal", order.subtotal().toPlainString()
+				)
+		));
+	}
+
+	private void publishSubmitted(CustomerOrder order) {
+		eventPublisher.publishEvent(AuditTrailEvent.record(
+				"ordering",
+				"ORDER",
+				order.id(),
+				"ORDER_SUBMITTED",
+				"Order submitted",
+				Map.of(
+						"orderNumber", order.orderNumber(),
+						"status", order.status().name(),
+						"submittedAt", order.submittedAt().toString()
+				)
+		));
 	}
 
 	private record OutletSnapshot(UUID outletId, String deliveryZone) {

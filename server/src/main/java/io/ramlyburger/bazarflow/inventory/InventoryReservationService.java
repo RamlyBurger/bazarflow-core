@@ -1,5 +1,6 @@
 package io.ramlyburger.bazarflow.inventory;
 
+import io.ramlyburger.bazarflow.common.AuditTrailEvent;
 import io.ramlyburger.bazarflow.common.BusinessException;
 import io.ramlyburger.bazarflow.common.ConflictException;
 import io.ramlyburger.bazarflow.common.NotFoundException;
@@ -8,8 +9,10 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,15 +23,18 @@ public class InventoryReservationService {
 	private final InventoryLotRepository inventoryLotRepository;
 	private final InventoryReservationRepository inventoryReservationRepository;
 	private final StockMovementRepository stockMovementRepository;
+	private final ApplicationEventPublisher eventPublisher;
 
 	InventoryReservationService(
 			InventoryLotRepository inventoryLotRepository,
 			InventoryReservationRepository inventoryReservationRepository,
-			StockMovementRepository stockMovementRepository
+			StockMovementRepository stockMovementRepository,
+			ApplicationEventPublisher eventPublisher
 	) {
 		this.inventoryLotRepository = inventoryLotRepository;
 		this.inventoryReservationRepository = inventoryReservationRepository;
 		this.stockMovementRepository = stockMovementRepository;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional
@@ -44,7 +50,9 @@ public class InventoryReservationService {
 			reserveItem(reservation, command.orderId(), command.requiredByDate(), item);
 		}
 
-		return toResponse(inventoryReservationRepository.save(reservation));
+		InventoryReservation savedReservation = inventoryReservationRepository.save(reservation);
+		publishInventoryReserved(savedReservation);
+		return toResponse(savedReservation);
 	}
 
 	@Transactional(readOnly = true)
@@ -149,5 +157,26 @@ public class InventoryReservationService {
 				line.quantity(),
 				line.expiryDate()
 		);
+	}
+
+	private void publishInventoryReserved(InventoryReservation reservation) {
+		BigDecimal totalQuantity = reservation.lines()
+				.stream()
+				.map(ReservationLine::quantity)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		eventPublisher.publishEvent(AuditTrailEvent.record(
+				"inventory",
+				"ORDER",
+				reservation.orderId(),
+				"INVENTORY_RESERVED",
+				"Inventory reserved for order",
+				Map.of(
+						"reservationId", reservation.id().toString(),
+						"lineCount", Integer.toString(reservation.lines().size()),
+						"totalQuantity", totalQuantity.toPlainString(),
+						"expiresAt", reservation.expiresAt().toString()
+				)
+		));
 	}
 }

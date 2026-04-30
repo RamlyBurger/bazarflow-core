@@ -1,5 +1,6 @@
 package io.ramlyburger.bazarflow.inventory;
 
+import io.ramlyburger.bazarflow.common.AuditTrailEvent;
 import io.ramlyburger.bazarflow.common.ConflictException;
 import io.ramlyburger.bazarflow.common.NotFoundException;
 import java.math.BigDecimal;
@@ -7,7 +8,9 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,15 +21,18 @@ class InventoryService {
 	private final InventoryLotRepository inventoryLotRepository;
 	private final StockMovementRepository stockMovementRepository;
 	private final JdbcTemplate jdbcTemplate;
+	private final ApplicationEventPublisher eventPublisher;
 
 	InventoryService(
 			InventoryLotRepository inventoryLotRepository,
 			StockMovementRepository stockMovementRepository,
-			JdbcTemplate jdbcTemplate
+			JdbcTemplate jdbcTemplate,
+			ApplicationEventPublisher eventPublisher
 	) {
 		this.inventoryLotRepository = inventoryLotRepository;
 		this.stockMovementRepository = stockMovementRepository;
 		this.jdbcTemplate = jdbcTemplate;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional
@@ -51,6 +57,7 @@ class InventoryService {
 
 		InventoryLot savedLot = inventoryLotRepository.save(lot);
 		stockMovementRepository.save(StockMovement.receive(savedLot));
+		publishLotReceived(savedLot);
 		return toLot(savedLot);
 	}
 
@@ -121,5 +128,22 @@ class InventoryService {
 				lot.status(),
 				lot.receivedAt()
 		);
+	}
+
+	private void publishLotReceived(InventoryLot lot) {
+		eventPublisher.publishEvent(AuditTrailEvent.record(
+				"inventory",
+				"SKU",
+				lot.skuId(),
+				"INVENTORY_LOT_RECEIVED",
+				"Inventory lot received",
+				Map.of(
+						"lotId", lot.id().toString(),
+						"lotCode", lot.lotCode(),
+						"warehouseCode", lot.warehouseCode(),
+						"receivedQuantity", lot.receivedQuantity().toPlainString(),
+						"expiryDate", lot.expiryDate().toString()
+				)
+		));
 	}
 }
