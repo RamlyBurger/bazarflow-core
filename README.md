@@ -8,12 +8,14 @@ The backend focuses on the business-critical paths: order intake, inventory rese
 
 ## Current Status
 
-Phase 0 bootstrap is in progress:
+The repository currently includes:
 
 - Spring Boot 3.5.14 backend scaffolded with a Java 17+ baseline and Java 21 LTS verification
-- Spring Security, Flyway, PostgreSQL, Kafka, Springdoc, and internal module-boundary verification added
+- Spring Security, Flyway, PostgreSQL, Kafka, Springdoc, and internal module-boundary verification
+- Problem-details error responses and `X-Correlation-Id` propagation for API requests
 - Business module packages created for `common`, `identity`, `partner`, `catalog`, `inventory`, `pricing`, `ordering`, `fulfillment`, `audit`, and `reporting`
 - `GET /api/platform/status` exposes the current module map
+- Partner APIs for retailer creation, retailer lookup, outlet creation, and credit-status updates
 - React 19.2 and Vite 8.0 operations console scaffolded with TanStack Query, Recharts, and Lucide icons
 - Docker Compose, Taskfile, ADRs, HTTP examples, and GitHub Actions CI added
 

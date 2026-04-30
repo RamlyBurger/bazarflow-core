@@ -1,0 +1,10 @@
+package io.ramlyburger.bazarflow.common;
+
+import org.springframework.http.HttpStatus;
+
+public class ConflictException extends BusinessException {
+
+	public ConflictException(String errorCode, String message) {
+		super(errorCode, HttpStatus.CONFLICT, message);
+	}
+}

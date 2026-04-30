@@ -1,0 +1,43 @@
+### Create retailer
+POST http://localhost:8080/api/retailers
+Content-Type: application/json
+X-Correlation-Id: local-create-retailer
+
+{
+  "legalName": "Arctic Fresh Trading",
+  "tradingName": "Arctic Fresh",
+  "registrationNumber": "TST-1001"
+}
+
+### List retailers
+GET http://localhost:8080/api/retailers
+X-Correlation-Id: local-list-retailers
+
+### Get retailer
+GET http://localhost:8080/api/retailers/{{retailerId}}
+X-Correlation-Id: local-get-retailer
+
+### Create outlet
+POST http://localhost:8080/api/retailers/{{retailerId}}/outlets
+Content-Type: application/json
+X-Correlation-Id: local-create-outlet
+
+{
+  "name": "Northside Store",
+  "deliveryZone": "NORTH-02",
+  "addressLine1": "12 Cold Chain Avenue",
+  "city": "Northport",
+  "state": "Central State",
+  "postalCode": "10000",
+  "deliveryWindowStart": "09:00:00",
+  "deliveryWindowEnd": "12:00:00"
+}
+
+### Update credit status
+PATCH http://localhost:8080/api/retailers/{{retailerId}}/credit-status
+Content-Type: application/json
+X-Correlation-Id: local-update-credit-status
+
+{
+  "creditStatus": "ON_HOLD"
+}

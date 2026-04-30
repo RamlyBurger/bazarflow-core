@@ -52,6 +52,12 @@ The system handles:
 
 This is not a generic ecommerce clone. The unique angle is distributor operations: expiry-aware stock allocation, delivery SLA risk, batch traceability, and operational auditability.
 
+## Current Implementation State
+
+The initial repository scaffold is in place. The backend now has module-boundary verification, PostgreSQL migrations, Spring Security method guards, problem-details error handling, request correlation IDs, and the first partner-management API slice for retailers, outlets, and credit status. The partner API is covered by PostgreSQL-backed Testcontainers integration tests.
+
+The next implementation slice should add the catalog and inventory foundations before order submission is built on top of them.
+
 ## Engineering Scope
 
 | Area | Implementation notes |
