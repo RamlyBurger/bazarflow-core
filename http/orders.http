@@ -23,7 +23,7 @@ X-Correlation-Id: local-list-orders
 GET http://localhost:8080/api/orders/{{orderId}}
 X-Correlation-Id: local-get-order
 
-### Submit order
+### Submit order and reserve stock
 POST http://localhost:8080/api/orders/{{orderId}}/submit
 Idempotency-Key: local-submit-order-1
 X-Correlation-Id: local-submit-order

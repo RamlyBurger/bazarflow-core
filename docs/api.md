@@ -60,6 +60,9 @@ Products use normalized relational fields plus JSONB metadata for flexible attri
 POST /api/inventory/lots
 GET  /api/inventory/lots
 GET  /api/inventory/availability?skuId={skuId}
+GET  /api/inventory/reservations
+GET  /api/inventory/reservations?orderId={orderId}
+GET  /api/inventory/reservations/{reservationId}
 ```
 
 Role access:
@@ -69,8 +72,10 @@ Role access:
 | `POST /api/inventory/lots` | `OPS_MANAGER`, `WAREHOUSE` |
 | `GET /api/inventory/lots` | `OPS_MANAGER`, `WAREHOUSE`, `SALES`, `AUDITOR` |
 | `GET /api/inventory/availability` | `OPS_MANAGER`, `WAREHOUSE`, `SALES`, `AUDITOR` |
+| `GET /api/inventory/reservations` | `OPS_MANAGER`, `WAREHOUSE`, `SALES`, `AUDITOR` |
+| `GET /api/inventory/reservations/{reservationId}` | `OPS_MANAGER`, `WAREHOUSE`, `SALES`, `AUDITOR` |
 
-Receiving a lot creates an available inventory lot and records an initial `RECEIVE` stock movement. Quantity constraints are enforced in both API validation and PostgreSQL checks.
+Receiving a lot creates an available inventory lot and records an initial `RECEIVE` stock movement. Submitting an order creates an active reservation, allocates the earliest valid expiry lots first, updates available and reserved quantities, and records `RESERVE` stock movements. Quantity constraints are enforced in both API validation and PostgreSQL checks.
 
 ## Pricing Endpoints
 
@@ -114,6 +119,6 @@ Role access:
 | `POST /api/orders/{orderId}/submit` | `OPS_MANAGER`, `SALES` |
 | `GET /api/orders/{orderId}/timeline` | `OPS_MANAGER`, `SALES`, `WAREHOUSE`, `AUDITOR` |
 
-Draft creation prices each order line through the pricing module. Submission requires an `Idempotency-Key` header and records a status timeline entry. A blocked retailer cannot submit an order.
+Draft creation prices each order line through the pricing module. Submission requires an `Idempotency-Key` header, reserves stock through the inventory module, and records a status timeline entry. A blocked retailer cannot submit an order. If stock is insufficient, the order remains in draft state and inventory quantities are unchanged.
 
 The API echoes `X-Correlation-Id` when provided and generates one when it is missing. Validation and business errors return RFC 9457-style problem details with an `errorCode` property.

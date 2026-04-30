@@ -18,3 +18,15 @@ X-Correlation-Id: local-list-lots
 ### SKU availability
 GET http://localhost:8080/api/inventory/availability?skuId={{skuId}}
 X-Correlation-Id: local-sku-availability
+
+### List inventory reservations
+GET http://localhost:8080/api/inventory/reservations
+X-Correlation-Id: local-list-reservations
+
+### List inventory reservations by order
+GET http://localhost:8080/api/inventory/reservations?orderId={{orderId}}
+X-Correlation-Id: local-list-order-reservations
+
+### Get inventory reservation
+GET http://localhost:8080/api/inventory/reservations/{{reservationId}}
+X-Correlation-Id: local-get-reservation
