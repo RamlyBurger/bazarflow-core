@@ -23,7 +23,7 @@ The repository currently includes:
 - Fulfillment APIs for pick wave generation, planned dispatch jobs, completion/failure recording, reservation consumption, and SLA-risk lookup
 - Audit APIs for order and inventory event lookup with request actor and correlation metadata
 - Reporting API for dashboard KPIs, work queue, risk watch, throughput, dispatch backlog, and audit timeline
-- React 19.2 and Vite 8.0 operations console connected to live platform and reporting endpoints, with local fallback data
+- React 19.2 and Vite 8.0 operations console with Keycloak sign-in, live platform/reporting reads, and local fallback data
 - Swagger bearer-token authentication wired to the local Keycloak realm
 - Docker Compose, Taskfile, ADRs, HTTP examples, and GitHub Actions CI added
 

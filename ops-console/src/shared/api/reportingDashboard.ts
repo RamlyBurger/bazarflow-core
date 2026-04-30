@@ -6,6 +6,7 @@ import {
   throughput as fallbackThroughput,
   timeline as fallbackTimeline,
 } from '../../features/dashboard/dashboardData'
+import { apiFetch } from './http'
 
 export type DashboardKpi = {
   label: string
@@ -105,7 +106,7 @@ export const fallbackDashboard: DashboardView = {
 
 export async function fetchReportingDashboard(): Promise<DashboardView> {
   try {
-    const response = await fetch('/api/reporting/dashboard', {
+    const response = await apiFetch('/api/reporting/dashboard', {
       headers: {
         Accept: 'application/json',
       },

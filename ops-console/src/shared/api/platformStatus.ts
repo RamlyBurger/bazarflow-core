@@ -1,3 +1,5 @@
+import { apiFetch } from './http'
+
 export type PlatformModule = {
   name: string
   responsibility: string
@@ -29,7 +31,7 @@ const fallbackStatus: PlatformStatus = {
 
 export async function fetchPlatformStatus(): Promise<PlatformStatus> {
   try {
-    const response = await fetch('/api/platform/status', {
+    const response = await apiFetch('/api/platform/status', {
       headers: {
         Accept: 'application/json',
       },

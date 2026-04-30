@@ -28,7 +28,8 @@
 }
 
 .nav-item,
-.icon-button {
+.icon-button,
+.auth-button {
   border: 0;
   cursor: pointer;
   color: inherit;
@@ -85,6 +86,7 @@
 
 .topbar-actions {
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .icon-button {
@@ -95,6 +97,48 @@
   place-items: center;
   border: 1px solid #d9dee5;
   background: #ffffff;
+}
+
+.auth-button,
+.operator,
+.auth-error {
+  height: 38px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.auth-button {
+  background: #17212b;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.auth-button:hover {
+  background: #0f766e;
+}
+
+.operator {
+  max-width: 190px;
+  border: 1px solid #b7ded8;
+  background: #e8f2f2;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.operator span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
 .tenant,

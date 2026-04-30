@@ -28,7 +28,7 @@ Local users use the password `bazarflow`:
 | `dispatch.operator` | `DISPATCH` |
 | `audit.viewer` | `AUDITOR` |
 
-Swagger UI is configured for bearer authentication. Use the `bazarflow-ops-console` public client when authorizing through the local realm.
+Swagger UI is configured for bearer authentication. Use the `bazarflow-ops-console` public client when authorizing through the local realm. The operations console uses the same public client for local authorization-code sign-in.
 
 ## Partner Endpoints
 

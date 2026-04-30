@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Bell, Command, RefreshCw, Search } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Bell, Command, LogIn, LogOut, RefreshCw, Search, ShieldCheck } from 'lucide-react'
 import {
   Area,
   AreaChart,
@@ -18,17 +18,58 @@ import {
 } from '../features/dashboard/dashboardData'
 import { fetchPlatformStatus } from '../shared/api/platformStatus'
 import { fallbackDashboard, fetchReportingDashboard } from '../shared/api/reportingDashboard'
+import {
+  completeLoginFromRedirect,
+  getStoredSession,
+  signOut,
+  startLogin,
+  type AuthSession,
+} from '../shared/auth/keycloakAuth'
 import './App.css'
 
 const RiskIcon = riskIcon
 
 function App() {
+  const queryClient = useQueryClient()
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() => getStoredSession())
+  const [authError, setAuthError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    completeLoginFromRedirect()
+      .then((session) => {
+        if (!active) {
+          return
+        }
+
+        setAuthSession(session)
+        if (session) {
+          setAuthError(null)
+          void queryClient.invalidateQueries()
+        }
+      })
+      .catch(() => {
+        if (!active) {
+          return
+        }
+
+        setAuthSession(null)
+        setAuthError('Sign-in failed')
+        void queryClient.invalidateQueries()
+      })
+
+    return () => {
+      active = false
+    }
+  }, [queryClient])
+
   const { data: platformStatus, isFetching } = useQuery({
     queryKey: ['platform-status'],
     queryFn: fetchPlatformStatus,
   })
   const { data: dashboard = fallbackDashboard, isFetching: isDashboardFetching } = useQuery({
-    queryKey: ['reporting-dashboard'],
+    queryKey: ['reporting-dashboard', authSession?.username ?? 'anonymous'],
     queryFn: fetchReportingDashboard,
   })
 
@@ -36,6 +77,19 @@ function App() {
     () => platformStatus?.modules.slice(0, 6) ?? [],
     [platformStatus],
   )
+
+  const handleRefresh = () => {
+    void queryClient.invalidateQueries()
+  }
+
+  const handleSignIn = () => {
+    setAuthError(null)
+    void startLogin().catch(() => setAuthError('Sign-in unavailable'))
+  }
+
+  const handleSignOut = () => {
+    signOut()
+  }
 
   return (
     <main className="shell">
@@ -66,11 +120,28 @@ function App() {
             <span>Search orders, SKUs, lots, outlets</span>
           </div>
           <div className="topbar-actions">
-            <button type="button" className="icon-button" title="Refresh">
+            {authSession ? (
+              <span className="operator" title={authSession.roles.join(', ') || undefined}>
+                <ShieldCheck size={16} aria-hidden="true" />
+                <span>{authSession.username ?? 'signed in'}</span>
+              </span>
+            ) : authError ? (
+              <span className="auth-error">{authError}</span>
+            ) : null}
+            <button type="button" className="icon-button" title="Refresh" onClick={handleRefresh}>
               <RefreshCw size={17} aria-hidden="true" />
             </button>
             <button type="button" className="icon-button" title="Notifications">
               <Bell size={17} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="auth-button"
+              title={authSession ? 'Sign out' : 'Sign in'}
+              onClick={authSession ? handleSignOut : handleSignIn}
+            >
+              {authSession ? <LogOut size={16} aria-hidden="true" /> : <LogIn size={16} aria-hidden="true" />}
+              <span>{authSession ? 'Sign out' : 'Sign in'}</span>
             </button>
             <span className="tenant">MY Frozen Distribution</span>
           </div>
