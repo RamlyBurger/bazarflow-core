@@ -3,6 +3,9 @@ package io.ramlyburger.bazarflow.ordering;
 import io.ramlyburger.bazarflow.common.BusinessException;
 import io.ramlyburger.bazarflow.common.ConflictException;
 import io.ramlyburger.bazarflow.common.NotFoundException;
+import io.ramlyburger.bazarflow.inventory.InventoryReservationCommand;
+import io.ramlyburger.bazarflow.inventory.InventoryReservationItemCommand;
+import io.ramlyburger.bazarflow.inventory.InventoryReservationService;
 import io.ramlyburger.bazarflow.pricing.PriceQuoteCommand;
 import io.ramlyburger.bazarflow.pricing.PriceQuoteItemCommand;
 import io.ramlyburger.bazarflow.pricing.PriceQuoteLineResponse;
@@ -32,6 +35,7 @@ class OrderService {
 	private final CustomerOrderRepository orderRepository;
 	private final OrderStatusHistoryRepository statusHistoryRepository;
 	private final IdempotencyRecordRepository idempotencyRecordRepository;
+	private final InventoryReservationService inventoryReservationService;
 	private final PricingService pricingService;
 	private final JdbcTemplate jdbcTemplate;
 
@@ -39,12 +43,14 @@ class OrderService {
 			CustomerOrderRepository orderRepository,
 			OrderStatusHistoryRepository statusHistoryRepository,
 			IdempotencyRecordRepository idempotencyRecordRepository,
+			InventoryReservationService inventoryReservationService,
 			PricingService pricingService,
 			JdbcTemplate jdbcTemplate
 	) {
 		this.orderRepository = orderRepository;
 		this.statusHistoryRepository = statusHistoryRepository;
 		this.idempotencyRecordRepository = idempotencyRecordRepository;
+		this.inventoryReservationService = inventoryReservationService;
 		this.pricingService = pricingService;
 		this.jdbcTemplate = jdbcTemplate;
 	}
@@ -137,6 +143,14 @@ class OrderService {
 		}
 
 		validateRetailerCanSubmit(order.retailerId());
+		inventoryReservationService.reserve(new InventoryReservationCommand(
+				order.id(),
+				order.requestedDeliveryDate(),
+				order.lines()
+						.stream()
+						.map(line -> new InventoryReservationItemCommand(line.skuId(), line.quantity()))
+						.toList()
+		));
 		order.submit();
 		statusHistoryRepository.save(OrderStatusHistory.transition(
 				order.id(),

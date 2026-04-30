@@ -2,6 +2,7 @@ package io.ramlyburger.bazarflow.ordering;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -73,6 +74,8 @@ class OrderApiIntegrationTests {
 		UUID skuId = createSku("ORDER-SKU-001");
 		UUID priceBookId = createPriceBook("PB-ORDER-001");
 		createRule(priceBookId, "ORDER-PRICE-001", skuId, "9.50");
+		receiveLot(skuId, "ORDER-FEFO-LATE", "5.000", LocalDate.now(ZoneOffset.UTC).plusDays(40));
+		receiveLot(skuId, "ORDER-FEFO-EARLY", "2.000", LocalDate.now(ZoneOffset.UTC).plusDays(10));
 
 		UUID orderId = createDraftOrder(retailerId, outletId, skuId, "3.000")
 				.andExpect(status().isCreated())
@@ -95,6 +98,29 @@ class OrderApiIntegrationTests {
 						.header("Idempotency-Key", "submit-order-001"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("SUBMITTED"));
+
+		mockMvc.perform(get("/api/inventory/availability").param("skuId", skuId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.availableQuantity").value(4.0))
+				.andExpect(jsonPath("$.reservedQuantity").value(3.0));
+
+		JsonNode lots = objectMapper.readTree(mockMvc.perform(get("/api/inventory/lots"))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString());
+		assertLotQuantities(lots, "ORDER-FEFO-EARLY", "0.000", "2.000");
+		assertLotQuantities(lots, "ORDER-FEFO-LATE", "4.000", "1.000");
+
+		mockMvc.perform(get("/api/inventory/reservations").param("orderId", orderId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].status").value("ACTIVE"))
+				.andExpect(jsonPath("$[0].lines", hasSize(2)))
+				.andExpect(jsonPath("$[0].lines[0].lotCode").value("ORDER-FEFO-EARLY"))
+				.andExpect(jsonPath("$[0].lines[0].quantity").value(2.0))
+				.andExpect(jsonPath("$[0].lines[1].lotCode").value("ORDER-FEFO-LATE"))
+				.andExpect(jsonPath("$[0].lines[1].quantity").value(1.0));
 
 		mockMvc.perform(get("/api/orders/{orderId}/timeline", orderId))
 				.andExpect(status().isOk())
@@ -139,6 +165,36 @@ class OrderApiIntegrationTests {
 		createDraftOrder(retailerId, outletId, skuId, "1.000")
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.errorCode").value("PRICE_RULE_NOT_FOUND"));
+	}
+
+	@Test
+	@WithMockUser(roles = "OPS_MANAGER")
+	void rejectsSubmitWhenStockIsInsufficientAndLeavesOrderDraft() throws Exception {
+		UUID retailerId = createRetailer("Insufficient Stock Retailer", "ORDER-STOCK-001");
+		UUID outletId = createOutlet(retailerId, "Insufficient Stock Outlet", "east");
+		UUID skuId = createSku("ORDER-STOCK-SKU-001");
+		UUID priceBookId = createPriceBook("PB-ORDER-STOCK");
+		createRule(priceBookId, "ORDER-STOCK-PRICE", skuId, "4.25");
+		receiveLot(skuId, "ORDER-STOCK-LOT", "1.000", LocalDate.now(ZoneOffset.UTC).plusDays(20));
+		UUID orderId = createDraftOrder(retailerId, outletId, skuId, "2.000")
+				.andExpect(status().isCreated())
+				.andReturnOrderId();
+
+		mockMvc.perform(post("/api/orders/{orderId}/submit", orderId)
+						.header("X-Correlation-Id", "test-correlation-insufficient-stock")
+						.header("Idempotency-Key", "insufficient-stock-submit-001"))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.errorCode").value("INSUFFICIENT_STOCK"))
+				.andExpect(jsonPath("$.correlationId").value("test-correlation-insufficient-stock"));
+
+		mockMvc.perform(get("/api/orders/{orderId}", orderId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("DRAFT"));
+
+		mockMvc.perform(get("/api/inventory/availability").param("skuId", skuId.toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.availableQuantity").value(1.0))
+				.andExpect(jsonPath("$.reservedQuantity").value(0));
 	}
 
 	@Test
@@ -214,6 +270,20 @@ class OrderApiIntegrationTests {
 								1,
 								LocalDate.now(ZoneOffset.UTC).minusDays(1),
 								null
+						)))
+				)
+				.andExpect(status().isCreated());
+	}
+
+	private void receiveLot(UUID skuId, String lotCode, String quantity, LocalDate expiryDate) throws Exception {
+		mockMvc.perform(post("/api/inventory/lots")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(Map.of(
+								"skuId", skuId,
+								"lotCode", lotCode,
+								"warehouseCode", "MAIN-WAREHOUSE",
+								"receivedQuantity", new BigDecimal(quantity),
+								"expiryDate", expiryDate
 						)))
 				)
 				.andExpect(status().isCreated());
@@ -311,5 +381,24 @@ class OrderApiIntegrationTests {
 			JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
 			return UUID.fromString(response.get("id").asText());
 		}
+	}
+
+	private static void assertLotQuantities(
+			JsonNode lots,
+			String lotCode,
+			String expectedAvailableQuantity,
+			String expectedReservedQuantity
+	) {
+		for (JsonNode lot : lots) {
+			if (lotCode.equals(lot.get("lotCode").asText())) {
+				assertThat(lot.get("availableQuantity").decimalValue())
+						.isEqualByComparingTo(new BigDecimal(expectedAvailableQuantity));
+				assertThat(lot.get("reservedQuantity").decimalValue())
+						.isEqualByComparingTo(new BigDecimal(expectedReservedQuantity));
+				return;
+			}
+		}
+
+		throw new AssertionError("Lot was not found: " + lotCode);
 	}
 }

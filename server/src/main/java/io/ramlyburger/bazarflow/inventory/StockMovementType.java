@@ -1,5 +1,6 @@
 package io.ramlyburger.bazarflow.inventory;
 
 public enum StockMovementType {
-	RECEIVE
+	RECEIVE,
+	RESERVE
 }

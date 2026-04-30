@@ -52,4 +52,13 @@ class StockMovement {
 	static StockMovement receive(InventoryLot lot) {
 		return new StockMovement(lot, StockMovementType.RECEIVE, lot.receivedQuantity(), "Initial lot receipt");
 	}
+
+	static StockMovement reserve(InventoryLot lot, BigDecimal quantity, UUID orderId) {
+		return new StockMovement(
+				lot,
+				StockMovementType.RESERVE,
+				quantity.negate(),
+				"Reserved for order " + orderId
+		);
+	}
 }

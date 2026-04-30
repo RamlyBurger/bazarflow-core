@@ -93,6 +93,15 @@ class InventoryLot {
 		return new InventoryLot(skuId, lotCode, warehouseCode, receivedQuantity, expiryDate);
 	}
 
+	void reserve(BigDecimal quantity) {
+		if (status != LotStatus.AVAILABLE || availableQuantity.compareTo(quantity) < 0) {
+			throw new IllegalStateException("Inventory lot does not have enough available quantity");
+		}
+
+		this.availableQuantity = this.availableQuantity.subtract(quantity);
+		this.reservedQuantity = this.reservedQuantity.add(quantity);
+	}
+
 	@PrePersist
 	void markCreated() {
 		Instant now = Instant.now();
