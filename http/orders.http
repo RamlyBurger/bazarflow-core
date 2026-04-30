@@ -28,6 +28,10 @@ POST http://localhost:8080/api/orders/{{orderId}}/submit
 Idempotency-Key: local-submit-order-1
 X-Correlation-Id: local-submit-order
 
+### Accept submitted order
+POST http://localhost:8080/api/orders/{{orderId}}/accept
+X-Correlation-Id: local-accept-order
+
 ### Order timeline
 GET http://localhost:8080/api/orders/{{orderId}}/timeline
 X-Correlation-Id: local-order-timeline

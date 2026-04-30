@@ -1,0 +1,21 @@
+### Create pick wave for accepted orders
+POST http://localhost:8080/api/fulfillment/pick-waves
+Content-Type: application/json
+X-Correlation-Id: local-create-pick-wave
+
+{
+  "deliveryDate": "2030-12-31",
+  "deliveryZone": "EAST"
+}
+
+### List pick waves
+GET http://localhost:8080/api/fulfillment/pick-waves
+X-Correlation-Id: local-list-pick-waves
+
+### Get pick wave
+GET http://localhost:8080/api/fulfillment/pick-waves/{{pickWaveId}}
+X-Correlation-Id: local-get-pick-wave
+
+### List SLA-risk dispatch jobs
+GET http://localhost:8080/api/fulfillment/sla-risk
+X-Correlation-Id: local-fulfillment-sla-risk

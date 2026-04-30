@@ -106,6 +106,7 @@ POST /api/orders
 GET  /api/orders
 GET  /api/orders/{orderId}
 POST /api/orders/{orderId}/submit
+POST /api/orders/{orderId}/accept
 GET  /api/orders/{orderId}/timeline
 ```
 
@@ -117,11 +118,32 @@ Role access:
 | `GET /api/orders` | `OPS_MANAGER`, `SALES`, `WAREHOUSE`, `AUDITOR` |
 | `GET /api/orders/{orderId}` | `OPS_MANAGER`, `SALES`, `WAREHOUSE`, `AUDITOR` |
 | `POST /api/orders/{orderId}/submit` | `OPS_MANAGER`, `SALES` |
+| `POST /api/orders/{orderId}/accept` | `OPS_MANAGER` |
 | `GET /api/orders/{orderId}/timeline` | `OPS_MANAGER`, `SALES`, `WAREHOUSE`, `AUDITOR` |
 
-Draft creation prices each order line through the pricing module. Submission requires an `Idempotency-Key` header, reserves stock through the inventory module, and records a status timeline entry. A blocked retailer cannot submit an order. If stock is insufficient, the order remains in draft state and inventory quantities are unchanged.
+Draft creation prices each order line through the pricing module. Submission requires an `Idempotency-Key` header, reserves stock through the inventory module, and records a status timeline entry. Accepted orders become eligible for fulfillment planning. A blocked retailer cannot submit an order. If stock is insufficient, the order remains in draft state and inventory quantities are unchanged.
 
 Submitting an order also writes audit events for draft creation, stock reservation, and submission. Query `GET /api/audit/events?aggregateType=ORDER&aggregateId={orderId}` for an order-level operational timeline.
+
+## Fulfillment Endpoints
+
+```http
+POST /api/fulfillment/pick-waves
+GET  /api/fulfillment/pick-waves
+GET  /api/fulfillment/pick-waves/{pickWaveId}
+GET  /api/fulfillment/sla-risk
+```
+
+Role access:
+
+| Endpoint | Roles |
+|---|---|
+| `POST /api/fulfillment/pick-waves` | `OPS_MANAGER`, `DISPATCH` |
+| `GET /api/fulfillment/pick-waves` | `OPS_MANAGER`, `DISPATCH`, `WAREHOUSE`, `AUDITOR` |
+| `GET /api/fulfillment/pick-waves/{pickWaveId}` | `OPS_MANAGER`, `DISPATCH`, `WAREHOUSE`, `AUDITOR` |
+| `GET /api/fulfillment/sla-risk` | `OPS_MANAGER`, `DISPATCH`, `WAREHOUSE`, `AUDITOR` |
+
+Pick wave creation selects accepted orders for the requested delivery date and delivery zone that do not already have dispatch jobs. The response includes planned dispatch jobs with outlet delivery windows and SLA-risk flags. SLA risk is raised when a same-day job can no longer satisfy its delivery window after applying the route buffer.
 
 ## Audit Endpoints
 
